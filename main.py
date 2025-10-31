@@ -19,6 +19,16 @@ TILE_SYMBOLS = {
     'T': 'Teleportation'
 } 
 
+# マップを表示する際のシンボル定義
+ENTITY_SYMBOLS = {
+    "item": {"weapon": "W", "potion": "P", "key": "K", "trap": "!"},
+    "monster": "M",
+    "door": lambda door: "/" if door.opened else "D",
+    "chest": lambda chest: "C" if not chest.opened else "c",
+    "teleport": lambda tp: "T",
+    "hidden_item": "?",
+}
+
 MAP_DIR_PATH = "map_data/"
 TEXT_DIR_PATH = "game_texts/"
 
@@ -98,7 +108,7 @@ class Floor:
         return data
     
     # ===== ゴール情報初期化 =====
-    def _goal_init(self):
+    def _goal_init(self):  # TODO: key_only未対応
         goal = self.info.get('goal', {})
 
         # ゴール方法のタイプ. "reach" | "keys_only" | "reach_and_keys"
@@ -175,8 +185,44 @@ class Floor:
         print("Teleports:")
         pprint(self.teleports)
 
+    # ===== マップ上のシンボル収集 =====
+    def _collect_entity_symbols(self) -> dict[tuple[int, int], str]:
+        symbols: dict[tuple[int, int], str]= {}
+        # items
+        for item in self.items.values():
+            if item.picked:  # 回収済みアイテム
+                continue
+            if item.hidden and self.reveal_hidden:  # 未発見の隠しアイテム
+                symbols[item.pos] = ENTITY_SYMBOLS["hidden_item"]
+            else:
+                # symbols[item.pos] = ENTITY_SYMBOLS["item"].get(item.type, "~")
+                symbols[tuple(item.pos)] = ENTITY_SYMBOLS["item"].get(item.type, "~")
+        
+        # monsters
+        for monster in self.monsters.values():
+            if monster.alive:
+                symbols[monster.pos] = ENTITY_SYMBOLS["monster"]
+        
+        # doors
+        for door in self.doors.values():
+            symbols[door.pos] = ENTITY_SYMBOLS["door"](door)
+        
+        # chests
+        for chest in self.chests.values():
+            symbols[chest.pos] = ENTITY_SYMBOLS["chest"](chest)
+        
+        # teleports
+        for tp in self.teleports.values():
+            symbols[tp.source] = ENTITY_SYMBOLS["teleport"](tp)
+            if tp.bidirectional:
+                symbols[tp.target] = ENTITY_SYMBOLS["teleport"](tp)
+        return symbols
+
+
     def print_grid(self, player: 'Player' = None):
         """マップ全体を表示する"""
+        entity_symbols = self._collect_entity_symbols()
+
         for i in range(self.map_size[0]):
             row = []
             for j in range(self.map_size[1]):
@@ -187,6 +233,8 @@ class Floor:
                     row.append('S')
                 elif pos in self.goal['pos']:  # ゴール位置
                     row.append('G')
+                elif pos in entity_symbols:  # アイテム・モンスター・ギミック
+                    row.append(entity_symbols[pos])
                 elif self.grid[i][j] == '.':  # 通路
                     row.append(' ')
                 else:
@@ -200,7 +248,7 @@ class Item:
     def __init__(self, id, type, pos, hidden=False, params=None):
         self.id = id                # 一意なID
         self.type = type            # 'weapon'|'potion'|'key'|'trap'
-        self.pos = pos              # (row, col)
+        self.pos = tuple(pos)              # (row, col)
         self.hidden = hidden        # 描画する際に隠れているかどうか
         self.params = params or {}  # 追加パラメータ辞書
         self.picked = False         # 回収済みかどうか
@@ -259,7 +307,7 @@ ITEM_CLASS_MAP = {
 class Door:
     def __init__(self, id, pos, requires_key=None, opened=False):
         self.id = id
-        self.pos = pos
+        self.pos = tuple(pos)
         self.requires_key = requires_key  # ドアに必要なキーID
         self.opened = opened
     
@@ -269,7 +317,7 @@ class Door:
 class Chest:
     def __init__(self, id, pos, requires_key=None, contents=[], opened=False):
         self.id = id
-        self.pos = pos
+        self.pos = tuple(pos)
         self.requires_key = requires_key
         self.contents = contents  # item_id or 'gen:weapon:+3'
         self.opened = opened
@@ -280,8 +328,8 @@ class Chest:
 class Teleport:
     def __init__(self, id, source, target, requires_key=None, bidirectional=True):
         self.id = id
-        self.source = source
-        self.target = target
+        self.source = tuple(source)
+        self.target = tuple(target)
         self.requires_key = requires_key
         self.bidirectional = bidirectional
     
@@ -292,7 +340,7 @@ class Teleport:
 class Monster:
     def __init__(self, id, pos, ai_type, ai_params = {}, move_every=1, drop_list=[]):
         self.id = id  # 一意なID
-        self.pos = pos  # (row, col)
+        self.pos = tuple(pos)  # (row, col)
 
         self.ai_type = ai_type  # 'static'|'random'|'chase'|'patrol'
         self.ai_params = ai_params  # AIの行動についての追加パラメータ辞書
@@ -524,10 +572,12 @@ def main():
 
 
 def tmp():
-    floor = Floor(sample_map_data)
+    map01 = MAP_DIR_PATH + "map01.txt"
+    floor = Floor(map01)
+    # floor = Floor(sample_map_data)
     # print_grid(floor.grid, )
     floor.print_info()
-    # floor.print_grid()
+    floor.print_grid()
 
 if __name__ == "__main__":
     # main()
