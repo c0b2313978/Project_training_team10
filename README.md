@@ -1,7 +1,6 @@
 # MazeRPG – Map/JSON 仕様 & 実行手順
 
 本プロジェクトは **grid（地形）をテキスト**, **オブジェクト/ギミック等は JSON** に分離した構成です。  
-実装は dataclass を使わず、パーサは人間が正しく書く前提で最小限です。
 
 ---
 
@@ -109,7 +108,7 @@ json=maps/map01.json
 ### doors
 
 ```json
-{"id":"Dgold","pos":[10,15],"key":"gold","locked":true}
+{"id":"Dgold","pos":[10,15],"requires_key":"gold","opened":false}
 ```
 
 * 同セルに入ると自動で解錠を試みる（鍵条件を満たす場合のみ）。
@@ -117,7 +116,7 @@ json=maps/map01.json
 ### chests
 
 ```json
-{"id":"C1","pos":[5,6],"key":"red","opened":false,"contents":["generate:weapon:+7","P1"]}
+{"id":"C1","pos":[5,6],"requires_key":"red","opened":false,"contents":["generate:weapon:+7","P1"]}
 ```
 
 * 同セルに入ると自動で開封を試みる。中身はセル上にスポーン。
@@ -125,10 +124,11 @@ json=maps/map01.json
 ### teleports
 
 ```json
-{"id":"T1","src":[7,12],"dst":[3,2],"bi":true}
+{"id":"T1","source":[7,12],"target":[3,2],"bidirectional":true}
 ```
 
-* 停止時に起動（双方向は `bi: true`）。
+* 通過時に起動（双方向は `bidirectional: true`）。
+* 鍵が必要な時は `requires_key: {key_id}`。
 
 ### gimmicks
 

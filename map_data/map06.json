@@ -25,17 +25,17 @@
     ],
 
     "doors": [
-        {"id": "D_gold", "pos": [10,15], "key": "gold", "locked": true}
+        {"id": "D_gold", "pos": [10,15], "requires_key": "gold", "opened": false}
     ],
 
     "chests": [
-        {"id": "C1", "pos": [5,6], "key": "red", "opened": false, "contents": ["gen:weapon:+7", "P1"]},
+        {"id": "C1", "pos": [5,6], "requires_key": "red", "opened": false, "contents": ["gen:weapon:+7", "P1"]},
         {"id": "C2", "pos": [12,8], "opened": false, "contents": ["K_gold"]}
     ],
 
     "teleports": [
-        {"id": "T1", "src": [7,12], "dst": [3,2], "bi": true},
-        {"id": "T2", "src": [1,5],  "dst": [11,3], "bi": false}
+        {"id": "T1", "source": [7,12], "target": [3,2], "bidirectional": true},
+        {"id": "T2", "source": [1,5],  "target": [11,3], "bidirectional": true, "requires_key": "gold"}
     ],
 
     "gimmicks": {

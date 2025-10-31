@@ -44,10 +44,18 @@ class Floor:
         items, monsters, doors, chests, teleports, gimmicks
     """
     def __init__(self, map_file_path: str, specific_json_path: str = "", floor_id: int = -1) -> None:
+        self.floor_id = floor_id  # フロアID（任意指定）
+
+        # ===== マップ読み込み =====
         self.grid, self.json_path = read_map_data(map_file_path)
         self.map_size = (len(self.grid), len(self.grid[0]))  # (n_rows, n_cols)
+        self.movable_cells = set()  # 通行可能セル集合
+        for i in range(self.map_size[0]):
+            for j in range(self.map_size[1]):
+                if self.grid[i][j] == '.':
+                    self.movable_cells.add((i, j))
 
-        # JSONデータ読み込み
+        # ===== JSONデータ読み込み =====
         if specific_json_path or self.json_path:
             self.info = self._read_json_data(specific_json_path or self.json_path)  # specific_json_path が優先
         else:
@@ -70,13 +78,19 @@ class Floor:
         self._monsters_init()
 
         # ===== ドア =====
+        self.doors: dict[str, Door] = {}
+        self._doors_init()
 
         # ===== チェスト =====
+        self.chests: dict[str, Chest] = {}
+        self._chests_init()
 
         # ===== テレポート =====
+        self.teleports: dict[str, Teleport] = {}
+        self._teleports_init()
 
         # ===== ギミック =====
-
+        # TODO: ギミック初期化
 
     def _read_json_data(self, json_path: str) -> dict:
         """ JSONデータを読み込み、辞書で返す。 """
@@ -117,6 +131,27 @@ class Floor:
             monster = Monster(**monster_data)
             self.monsters[monster.id] = monster
     
+    # ===== ドア情報初期化 =====
+    def _doors_init(self):
+        doors_data = self.info.get('doors', [])
+        for door_data in doors_data:
+            door = Door(**door_data)
+            self.doors[door.id] = door
+
+    # ===== チェスト情報初期化 =====
+    def _chests_init(self):
+        chests_data = self.info.get('chests', [])
+        for chest_data in chests_data:
+            chest = Chest(**chest_data)
+            self.chests[chest.id] = chest
+        
+    # ===== テレポート情報初期化 =====
+    def _teleports_init(self):  
+        teleports_data = self.info.get('teleports', [])
+        for teleport_data in teleports_data:
+            teleport = Teleport(**teleport_data)
+            self.teleports[teleport.id] = teleport
+
     def print_info(self):
         """ フロア情報を表示する（デバッグ用） """
         print(f"Floor Name: {self.name}")
@@ -131,6 +166,15 @@ class Floor:
         
         print("Monsters:")
         pprint(self.monsters)
+
+        print("Doors:")
+        pprint(self.doors)
+
+        print("Chests:")
+        pprint(self.chests)
+
+        print("Teleports:")
+        pprint(self.teleports)
 
     def print_grid(self, player: 'Player' = None):
         """マップ全体を表示する"""
@@ -165,26 +209,36 @@ class Item:
 
 
 class Door:
-    def __init__(self, id, pos, requires_key=None):
+    def __init__(self, id, pos, requires_key=None, opened=False):
         self.id = id
         self.pos = pos
-        self.requires_key = requires_key  # 'red' など
-        self.locked = True
+        self.requires_key = requires_key  # ドアに必要なキーID
+        self.opened = opened
+    
+    def __repr__(self):
+        return f"Door(id={self.id}, pos={self.pos}, requires_key={self.requires_key}, opened={self.opened})"
 
 class Chest:
-    def __init__(self, id, pos, requires_key=None, contents=None):
+    def __init__(self, id, pos, requires_key=None, contents=[], opened=False):
         self.id = id
         self.pos = pos
         self.requires_key = requires_key
-        self.contents = contents or []  # item_id or 'gen:weapon:+3'
-        self.opened = False
+        self.contents = contents  # item_id or 'gen:weapon:+3'
+        self.opened = opened
+    
+    def __repr__(self):
+        return f"Chest(id={self.id}, pos={self.pos}, requires_key={self.requires_key}, contents={self.contents}, opened={self.opened})"
 
 class Teleport:
-    def __init__(self, id, src, dst, bidirectional=False):
+    def __init__(self, id, source, target, requires_key=None, bidirectional=True):
         self.id = id
-        self.src = src
-        self.dst = dst
+        self.source = source
+        self.target = target
+        self.requires_key = requires_key
         self.bidirectional = bidirectional
+    
+    def __repr__(self):
+        return f"Teleport(id={self.id}, source={self.source}, target={self.target}, requires_key={self.requires_key}, bidirectional={self.bidirectional})"
 
 # class Weapon(Item):
 #     def __init__(self) -> None:
