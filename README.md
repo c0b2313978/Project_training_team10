@@ -152,7 +152,6 @@ json=maps/map01.json
 
 ## ゲームループと操作
 
-* `run([...])` に `[(map_txt, None), ...]` を渡すと順にプレイします
 * 5フロアクリアでゲームクリア（`GameState.go_next_floor()` 内で判定）
 * コマンド: **w/a/s/d** 移動, **u** ポーション使用, **q** 終了
 * 描画優先: **プレイヤー > モンスター > ドア(閉) > チェスト(未開) > 隠しアイテム(?) > ゴール > テレポ > 床**
@@ -160,7 +159,7 @@ json=maps/map01.json
 
 ---
 
-## 実装ポリシー（本リポの方針）
+<!-- ## 実装ポリシー（本リポの方針）
 
 * **パーサは簡素**：マップ/JSONは正しく書かれている前提。過度な防御的コードは省略。
 * **責務の集約**：描画・移動・戦闘・敵AI・ドロップ・扉/宝箱・判定は **`GameState` メソッド** に集約。
@@ -169,30 +168,8 @@ json=maps/map01.json
 
   * AIの追加：`monsters_act()` の分岐に追加
   * 新アイテム：`on_step_common()` で type 分岐を追加
-  * 追加ギミック：`on_step_common()` / `_passable_*()` / `_compute_slide_path()` にフック
+  * 追加ギミック：`on_step_common()` / `_passable_*()` / `_compute_slide_path()` にフック -->
 
----
-
-## よくある拡張
-
-* **難易度スケーリング**：`__init__` で `for m in fl.monsters.values(): m['hp']=..., m['atk']=...` をフロア番号で係数化
-* **セーブ/ロード**：`GameState` の `floor_idx / cleared_count / player状態 / 各フロアの items/doors/chests/monsters` を JSON dump/load
-* **UI差し替え**：`render()` と `read_cmd()` を置き換えても、`step_turn()` はそのまま使える
-
----
-
-## 動作確認
-
-```python
-# main.py
-from main import run
-run([
-  ("maps/map06.txt", None),
-  # ("maps/map07.txt", None),
-])
-```
-
-* 期待値：氷上で直進、1歩ごとHP-1、`?` 表示のセルに乗るとアイテム判明、モンスターはAIに応じて行動、ゴール到達+鍵条件でクリア。
 
 ```
 @ ←プレイヤー
@@ -203,14 +180,3 @@ C ←未開宝箱
 G ←ゴール地点
 T ←テレポ台
 ```
-
----
-
-## トラブルシュート
-
-* **「gridは#/ .のみ」エラー**
-  → grid行に余計な文字が混入していないか確認（全角や空白末尾に注意）
-* **JSONの `start`/`goal.reach` などは配列**
-  → `(r,c)` ではなく `[r,c]` で書く（パース簡略化のため）
-* **隠しアイテムが見えない**
-  → `reveal_hidden` が `true` か、`hidden: true` の座標が正しいか確認

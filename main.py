@@ -72,7 +72,7 @@ class Floor:
 
         self.name = self.info.get('name', f"Floor {floor_id}")  # フロア名
         self.reveal_hidden = self.info.get('reveal_hidden', False)  # 隠しアイテム自動発見
-        self.start = tuple(self.info['start'])  # 開始位置 (row, col)
+        self.start: tuple[int, int] = tuple(self.info['start'])  # 開始位置 (row, col)
 
         # ===== ゴール =====
         self.goal = {}
@@ -230,7 +230,7 @@ class Floor:
                 if player is not None and pos == player.position:  # プレイヤー位置
                     row.append('@')
                 elif pos == self.start:  # スタート位置
-                    row.append('S')
+                    row.append('S')  # TODO: もしかしたらいらないかも？
                 elif pos in self.goal['pos']:  # ゴール位置
                     row.append('G')
                 elif pos in entity_symbols:  # アイテム・モンスター・ギミック
@@ -453,22 +453,22 @@ def read_map_data(file_path: str) -> tuple[list[list[str]], str]:
     return grid, json_path
 
 
-def print_grid(grid, info, player: Player = None):
-    for i in range(len(grid)):
-        row = []
-        for j in range(len(grid[i])):
-            if player is not None and (i, j) == player.position:
-                row.append('@')
-            elif (i, j) == info.get('start'):
-                row.append('S')
-            elif (i, j) == info.get('goal'):
-                row.append('G')
-            elif grid[i][j] == '.':
-                row.append(' ')
-            else:
-                row.append(grid[i][j])
+# def print_grid(grid, info, player: Player = None):
+#     for i in range(len(grid)):
+#         row = []
+#         for j in range(len(grid[i])):
+#             if player is not None and (i, j) == player.position:
+#                 row.append('@')
+#             elif (i, j) == info.get('start'):
+#                 row.append('S')
+#             elif (i, j) == info.get('goal'):
+#                 row.append('G')
+#             elif grid[i][j] == '.':
+#                 row.append(' ')
+#             else:
+#                 row.append(grid[i][j])
 
-        print("".join(row))
+#         print("".join(row))
 
 
 # プレイヤーからのコマンド入力を受け取る
@@ -503,36 +503,32 @@ def try_move_player(player: Player, direction: str, grid: list[list[str]]) -> tu
 
 # ゲーム実行の仮関数
 def tmp_run_game():
-    # print_game_text(TEXT_DIR_PATH+"Firstgame_ui.txt")
-    # time.sleep(1)
-    # print_game_text(TEXT_DIR_PATH+"Basic_rule.txt")
-    # time.sleep(1)
-    # print_game_text(TEXT_DIR_PATH+"Opening.txt")
-    # time.sleep(1)
-    grid, info = read_map_data(MAP_DIR_PATH + "map08.txt")
-    # print(info)
-    # return
-    player = Player(start=info['start'])
+    map01 = MAP_DIR_PATH + "map01.txt"
+    floor = Floor(map01)
+    player = Player(start_pos=floor.start)
 
-    print_grid(grid, info, player)
+    floor.print_grid(player)
+    print()
 
     while True:
         command = read_player_command()
         if command == 'q':
-            print("Quitting the game.")
+            print("ゲーム終了します。")
             break
 
-        new_position = try_move_player(player, command, grid)
+        new_position = try_move_player(player, command, floor.grid)
         if new_position is not None:
             player.position = new_position
         else:
-            print("Cannot move in that direction!")
-        
-        if player.position == info['goal']:
-            print("Reached the goal!")
-            break
+            print("その方向には移動できません！")
 
-        print_grid(grid, info, player)
+        if player.position == floor.info['goal']:
+            print("ゴールに到達しました！")
+            break
+        
+        print()
+        floor.print_grid(player)
+        print()
 
 
 # Main ループ
@@ -543,32 +539,32 @@ def main():
     time.sleep(1)
     print_game_text(TEXT_DIR_PATH+"Opening.txt")
     time.sleep(1)
-    for i in range(5):
-        palying_map = random_select_map()
-        grid, info = read_map_data(MAP_DIR_PATH + palying_map[i])
-        # print(info)
-        # return
-        player = Player(start=info['start'])
+    # for i in range(5):
+    #     palying_map = random_select_map()
+    #     grid, info = read_map_data(MAP_DIR_PATH + palying_map[i])
+    #     # print(info)
+    #     # return
+    #     player = Player(start=info['start'])
 
-        print_grid(grid, info, player)
+    #     print_grid(grid, info, player)
 
-        while True:
-            command = read_player_command()
-            if command == 'q':
-                print("Quitting the game.")
-                break
+    #     while True:
+    #         command = read_player_command()
+    #         if command == 'q':
+    #             print("Quitting the game.")
+    #             break
 
-            new_position = try_move_player(player, command, grid)
-            if new_position is not None:
-                player.position = new_position
-            else:
-                print("Cannot move in that direction!")
+    #         new_position = try_move_player(player, command, grid)
+    #         if new_position is not None:
+    #             player.position = new_position
+    #         else:
+    #             print("Cannot move in that direction!")
             
-            if player.position == info['goal']:
-                print("Reached the goal!")
-                break
+    #         if player.position == info['goal']:
+    #             print("Reached the goal!")
+    #             break
 
-            print_grid(grid, info, player)
+    #         print_grid(grid, info, player)
 
 
 def tmp():
@@ -581,5 +577,5 @@ def tmp():
 
 if __name__ == "__main__":
     # main()
-    #tmp_run_game()
-    tmp()
+    tmp_run_game()
+    # tmp()
