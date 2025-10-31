@@ -14,14 +14,14 @@
         {"id": "W1", "type": "weapon", "pos": [1,2], "hidden": false, "params": {"atk": 5}},
         {"id": "P1", "type": "potion", "pos": [1,10], "hidden": true,  "params": {}},
         {"id": "K_gold", "type": "key", "pos": [4,5], "hidden": false, "params": {"key_id": "gold"}},
-        {"id": "TR1", "type": "trap", "pos": [1,13], "hidden": false, "params": {"dmg": 10, "once": 1}}
+        {"id": "TR1", "type": "trap", "pos": [1,13], "hidden": false, "params": {"damage": 10, "once": 1}}
     ],
 
     "monsters": [
-        {"id": "M1", "pos": [2,8],  "ai": "static", "move": 0, "drop": ["P1"]},
-        {"id": "M2", "pos": [6,4],  "ai": "random", "params": {"p": 0.5}, "move": 1, "drop": ["gen:weapon:+3"]},
-        {"id": "M3", "pos": [8,6],  "ai": "chase",  "params": {"range": 6}, "move": 1, "drop": ["K_gold"]},
-        {"id": "M4", "pos": [10,11], "ai": "patrol", "params": {"path": [[10,11],[10,15],[8,15],[8,11]]}, "move": 2, "drop": ["gen:potion"]}
+        {"id": "M1", "pos": [2,8],  "ai_type": "static", "move_every": 0, "drop_list": ["P1"]},
+        {"id": "M2", "pos": [6,4],  "ai_type": "random", "ai_params": {"p": 0.5}, "move_every": 1, "drop_list": ["gen:weapon:+3"]},
+        {"id": "M3", "pos": [8,6],  "ai_type": "chase",  "ai_params": {"range": 6}, "move_every": 1, "drop_list": ["K_gold"]},
+        {"id": "M4", "pos": [10,11], "ai_type": "patrol", "ai_params": {"path": [[10,11],[10,15],[8,15],[8,11]]}, "move_every": 2, "drop_list": ["gen:potion"]}
     ],
 
     "doors": [

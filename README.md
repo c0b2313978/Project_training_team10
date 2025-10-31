@@ -78,31 +78,31 @@ json=maps/map01.json
 {"id":"W1","type":"weapon","pos":[1,2],"hidden":false,"params":{"atk":5}}
 {"id":"P1","type":"potion","pos":[1,5],"hidden":true,"params":{}}
 {"id":"K1","type":"key","pos":[2,6],"hidden":false,"params":{"key_id":"gold"}}
-{"id":"TR1","type":"trap","pos":[3,4],"hidden":false,"params":{"dmg":10,"once":1}}
+{"id":"TR1","type":"trap","pos":[3,4],"hidden":false,"params":{"damage":10,"once":1}}
 ```
 
 * `weapon`: 取得即 `ATK += atk`
 * `potion`: インベントリに入る。`u` で使用→HP全快
 * `key`: `params.key_id` をプレイヤーが所持
-* `trap`: 踏むと `dmg` ダメージ。`once=1` なら一度きり。
+* `trap`: 踏むと `damage` ダメージ。`once=1` なら一度きり。
 
 ### monsters
 
 ```json
-{"id":"M1","pos":[2,8],"ai":"static","move":0,"drop":["P1"]}
-{"id":"M2","pos":[6,4],"ai":"random","params":{"p":0.5},"move":1,"drop":["gen:weapon:+3"]}
-{"id":"M3","pos":[8,6],"ai":"chase","params":{"range":6},"move":1}
-{"id":"M4","pos":[10,11],"ai":"patrol","params":{"path":[[10,11],[10,15],[8,15],[8,11]]},"move":2}
+{"id":"M1","pos":[2,8],"ai_type":"static","move_every":0,"drop_list":["P1"]}
+{"id":"M2","pos":[6,4],"ai_type":"random","ai_params":{"p":0.5},"move":1,"drop_list":["generate:weapon:+3"]}
+{"id":"M3","pos":[8,6],"ai_type":"chase","ai_params":{"range":6},"move":1}
+{"id":"M4","pos":[10,11],"ai_type":"patrol","ai_params":{"path":[[10,11],[10,15],[8,15],[8,11]]},"move_every":2}
 ```
 
-* `ai`: `static` / `random` / `chase` / `patrol`
-* `move`: 何ターンごとに移動するか（0=動かない）
-* `params`:
+* `ai_type`: `static` / `random` / `chase` / `patrol`
+* `move_every`: 何ターンごとに移動するか（0=動かない）
+* `ai_params`:
 
   * `random`: `{ "p": 0.5 }` 移動確率
   * `chase`: `{ "range": 6 }` 追跡開始距離
   * `patrol`: `{ "path": [[r,c], ...] }` 巡回点
-* `drop`: 撃破時ドロップ。`"gen:weapon:+3"`, `"gen:potion"`, `"gen:key:red"` または既存 item の `"ID"`
+* `drop_list`: 撃破時ドロップ。`"generate:weapon:+3"`, `"generate:potion"`, `"generate:key:red"` または既存 item の `"ID"`
 
 > HP/ATK は**フロア入場時に自動設定**前提（実装側で難易度係数をかける等）。サンプル実装では未指定時に簡易値 `(hp=30, atk=6)` を補完。
 
@@ -117,7 +117,7 @@ json=maps/map01.json
 ### chests
 
 ```json
-{"id":"C1","pos":[5,6],"key":"red","opened":false,"contents":["gen:weapon:+7","P1"]}
+{"id":"C1","pos":[5,6],"key":"red","opened":false,"contents":["generate:weapon:+7","P1"]}
 ```
 
 * 同セルに入ると自動で開封を試みる。中身はセル上にスポーン。

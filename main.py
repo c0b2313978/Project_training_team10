@@ -64,11 +64,12 @@ class Floor:
         self._goal_init()
 
         # ===== アイテム =====
-        self.items = {}
+        self.items: dict[str, Item] = {}
         self._items_init()
 
         # ===== モンスター =====
-        # self.monsters = {}
+        self.monsters: dict[str, Monster] = {}
+        self._monsters_init()
 
         # ===== ドア =====
 
@@ -111,17 +112,27 @@ class Floor:
             item = Item(**item_data)
             self.items[item.id] = item
     
+    # ===== モンスター情報初期化 =====
+    def _monsters_init(self):
+        monsters_data = self.info.get('monsters', [])
+        for monster_data in monsters_data:
+            monster = Monster(**monster_data)
+            self.monsters[monster.id] = monster
+    
     def print_info(self):
         """ フロア情報を表示する（デバッグ用） """
         print(f"Floor Name: {self.name}")
         print(f"Map Size: {self.map_size}")
         print(f"Start Position: {self.start}")
+
         print("Goal Info:")
         pprint(self.goal)
+
         print("Items:")
-        # for item in self.items.values():
-            # pprint(vars(item))
         pprint(self.items)
+        
+        print("Monsters:")
+        pprint(self.monsters)
 
     def print_grid(self, player: 'Player' = None):
         """マップ全体を表示する"""
@@ -144,36 +155,35 @@ class Floor:
 
 class Item:
     def __init__(self, id, type, pos, hidden=False, params=None):
-        self.id = id
-        self.type = type        # 'weapon'|'potion'|'key'|'trap'
-        self.pos = pos
-        self.hidden = hidden
-        self.params = params or {}
-        self.picked = False
-        self.one_time_used = False  # trap用
+        self.id = id                # 一意なID
+        self.type = type            # 'weapon'|'potion'|'key'|'trap'
+        self.pos = pos              # (row, col)
+        self.hidden = hidden        # 描画する際に隠れているかどうか
+        self.params = params or {}  # 追加パラメータ辞書
+        self.picked = False         # 回収済みかどうか
     
     def __repr__(self):
         return f"Item(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
 
 
 class Door:
-    def __init__(self, id_, pos, requires_key=None):
-        self.id = id_
+    def __init__(self, id, pos, requires_key=None):
+        self.id = id
         self.pos = pos
         self.requires_key = requires_key  # 'red' など
         self.locked = True
 
 class Chest:
-    def __init__(self, id_, pos, requires_key=None, contents=None):
-        self.id = id_
+    def __init__(self, id, pos, requires_key=None, contents=None):
+        self.id = id
         self.pos = pos
         self.requires_key = requires_key
         self.contents = contents or []  # item_id or 'gen:weapon:+3'
         self.opened = False
 
 class Teleport:
-    def __init__(self, id_, src, dst, bidirectional=False):
-        self.id = id_
+    def __init__(self, id, src, dst, bidirectional=False):
+        self.id = id
         self.src = src
         self.dst = dst
         self.bidirectional = bidirectional
@@ -191,16 +201,41 @@ class Teleport:
 #         super().__init__()
 
 class Monster:
-    def __init__(self, id_, pos, ai_type, ai_params, move_every=1, drop_list=None):
-        self.id = id_
-        self.pos = pos
-        self.ai_type = ai_type      # 'static'|'random'|'chase'|'patrol'
-        self.ai_params = ai_params or {}
-        self.move_every = move_every
-        self.turn_counter = 0
-        self.alive = True
-        self.drop_list = drop_list or []
+    def __init__(self, id, pos, ai_type, ai_params = {}, move_every=1, drop_list=[]):
+        self.id = id  # 一意なID
+        self.pos = pos  # (row, col)
+
+        self.ai_type = ai_type  # 'static'|'random'|'chase'|'patrol'
+        self.ai_params = ai_params  # AIの行動についての追加パラメータ辞書
+
+        self.move_every = move_every  # 何ターンごとに移動するか（0=動かない）
+        self.turn_counter = 0  # ターンカウンター
+        self.drop_list = drop_list  # 撃破時ドロップアイテムIDリスト
+        
         # ステータスはフロア侵入時に自動で設定（要件）
+        self.alive = True  # 生存フラグ
+        self.hp = 0
+        self.attack = 0
+    
+    def __repr__(self):
+        return f"Monster(id={self.id}, pos={self.pos}, ai_type={self.ai_type}, ai_params={self.ai_params}, move_every={self.move_every}, drop_list={self.drop_list})"
+    
+    def init_status(self, player_hp, player_attack):
+        """ プレイヤーステータスに基づき、モンスターのステータスを初期化する """  # TODO: ステータス設定 要調整
+        self.hp = player_hp
+        self.attack = player_attack
+
+    def increment_turn(self):
+        """ ターンカウンターを進める """
+        if self.move_every > 0:
+            self.turn_counter = (self.turn_counter + 1) % self.move_every
+            if self.turn_counter == 0:
+                return True
+        return False
+
+    def reset_turn_counter(self):
+        """ ターンカウンターをリセットする """
+        self.turn_counter = 0
 
 
 class Gimmicks:
@@ -216,19 +251,13 @@ class Gimmicks:
 class Player:
     MAX_HP = 100
     BASE_ATK = 10
-    def __init__(self, start) -> None:
+    def __init__(self, start_pos: tuple[int, int]) -> None:
         self.hp = Player.MAX_HP
         self.attack = Player.BASE_ATK
-        self.position = start  # (row, col)
-        self.keys = set()
+        self.position = start_pos  # (row, col)
+        # self.keys = set()
         self.inventory = {}  # id -> Item
 
-
-class Enemy:
-    def __init__(self) -> None:
-        self.enemy_hp = 100
-        self.enemy_attack = 10
-        pass
 
 
 #ランダムにマップを選択しリストにまとめ
