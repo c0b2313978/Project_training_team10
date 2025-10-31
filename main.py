@@ -76,6 +76,7 @@ class Enemy:
 
 # Main ループ
 def main():
+    print("Main Loop")
     pass
 
 
