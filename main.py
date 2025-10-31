@@ -18,7 +18,7 @@ TILE_SYMBOLS = {
 
 } 
 
-MAP_DATA_PATH = "map_data/"
+MAP_DIR_PATH = "map_data/"
 
 class GameState:
     def __init__(self) -> None:
@@ -72,14 +72,49 @@ class Enemy:
         pass
 
 
+def read_map_data(file_path: str):
+    with open(file_path, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+    
+    in_grid_section = False
+    in_info_section = False
+    grid = []
+    info = {}
 
+    for line in lines:
+        line = line.rstrip("\n")
+        if line == "[grid]":
+            in_grid_section = True
+            in_info_section = False
+            continue
+        elif line == "[info]":
+            in_grid_section = False
+            in_info_section = True
+            continue
+
+        if in_grid_section:
+            # グリッドデータの処理
+            grid.append(list(line))
+        elif in_info_section:
+            # 情報データの処理
+            tmp = line.split(": ")
+            if len(tmp) == 2:
+                info[tmp[0]] = 
+                continue
+    
+    return grid, info
+
+
+def print_grid(grid):
+    for row in grid:
+        print("".join(row))
 
 # Main ループ
 def main():
     print("Main Loop")
-    pass
-
-
+    grid, info = read_map_data(MAP_DIR_PATH + "map06.txt")
+    print_grid(grid)
+    print(info)
 
 if __name__ == "__main__":
     main()
