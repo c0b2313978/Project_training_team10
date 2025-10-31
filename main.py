@@ -1,7 +1,9 @@
 # Team 10
-
+from pprint import pprint
+import json
 import sys
 import random
+import re
 import time
 
 TARGET_CLEAR = 5  # クリア必要フロア数
@@ -23,6 +25,8 @@ TILE_SYMBOLS = {
 MAP_DIR_PATH = "map_data/"
 TEXT_DIR_PATH = "game_texts/"
 
+sample_map_data = MAP_DIR_PATH + "sample01.txt"
+
 class GameState:
     def __init__(self) -> None:
         self.cleared_count = 0
@@ -35,23 +39,121 @@ class GameState:
 
 
 class Floor:
-    def __init__(self, floor_index) -> None:
-        self.floor_index = floor_index
-        self.grid, self.info = read_map_data(MAP_DIR_PATH + f"map0{floor_index}.txt") 
-        # self.start = 
-        # self.goal = 
-        pass
+    """
+    map_txt から読み込んだ1フロア分の全データ（grid以外はJSONから供給）
+    以下はJSONで与える:
+        name, reveal_hidden, start, goal, goal.type/keys
+        items, monsters, doors, chests, teleports, gimmicks
+    """
+    def __init__(self, map_file_path: str, specific_json_path: str = "", floor_id: int = -1) -> None:
+        self.grid, self.json_path = read_map_data(map_file_path)
+        self.map_size = (len(self.grid), len(self.grid[0]))  # (n_rows, n_cols)
 
+        # JSONデータ読み込み
+        if specific_json_path or self.json_path:
+            self.info = self._read_json_data(specific_json_path or self.json_path)  # specific_json_path が優先
+        else:
+            raise ValueError("JSONデータのパスが指定されていません。")
+
+        self.name = self.info.get('name', f"Floor {floor_id}")  # フロア名
+        self.reveal_hidden = self.info.get('reveal_hidden', False)  # 隠しアイテム自動発見
+        self.start = tuple(self.info['start'])  # 開始位置 (row, col)
+
+        # ===== ゴール =====
+        self.goal = {}
+        self._goal_init()
+
+        # ===== アイテム =====
+        self.items = {}
+        self._items_init()
+
+        # ===== モンスター =====
+        # self.monsters = {}
+
+        # ===== ドア =====
+
+        # ===== チェスト =====
+
+        # ===== テレポート =====
+
+        # ===== ギミック =====
+
+
+    def _read_json_data(self, json_path: str) -> dict:
+        """ JSONデータを読み込み、辞書で返す。 """
+        with open(json_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return data
+    
+    # ===== ゴール情報初期化 =====
+    def _goal_init(self):
+        goal = self.info.get('goal', {})
+
+        # ゴール方法のタイプ. "reach" | "keys_only" | "reach_and_keys"
+        self.goal['type'] = goal.get('type', 'reach')
+
+        # 複数のゴール. trueの場合 pos が2次元リストで渡される
+        self.goal['multiple'] = goal.get('multiple', False)  
+
+        # ゴールの位置. type=reach または reach_and_keys で使用
+        if self.goal['multiple'] is False:
+            self.goal['pos'] = set([tuple(goal.get('pos', (0, 0)))])
+        else:
+            self.goal['pos'] = set(tuple(p) for p in goal.get('pos', []))
+        
+        # ゴールに必要なkeyのid. type=keys_only または reach_and_keys で使用
+        self.goal['keys'] = list(goal.get('keys', []))
+
+    # ===== アイテム情報初期化 =====
+    def _items_init(self):
+        items_data = self.info.get('items', [])
+        for item_data in items_data:
+            item = Item(**item_data)
+            self.items[item.id] = item
+    
+    def print_info(self):
+        """ フロア情報を表示する（デバッグ用） """
+        print(f"Floor Name: {self.name}")
+        print(f"Map Size: {self.map_size}")
+        print(f"Start Position: {self.start}")
+        print("Goal Info:")
+        pprint(self.goal)
+        print("Items:")
+        # for item in self.items.values():
+            # pprint(vars(item))
+        pprint(self.items)
+
+    def print_grid(self, player: 'Player' = None):
+        """マップ全体を表示する"""
+        for i in range(self.map_size[0]):
+            row = []
+            for j in range(self.map_size[1]):
+                pos = (i, j)
+                if player is not None and pos == player.position:  # プレイヤー位置
+                    row.append('@')
+                elif pos == self.start:  # スタート位置
+                    row.append('S')
+                elif pos in self.goal['pos']:  # ゴール位置
+                    row.append('G')
+                elif self.grid[i][j] == '.':  # 通路
+                    row.append(' ')
+                else:
+                    row.append(self.grid[i][j])  # 壁
+
+            print("".join(row))
 
 class Item:
-    def __init__(self, id_, type_, pos, hidden=False, params=None):
-        self.id = id_
-        self.type = type_        # 'weapon'|'potion'|'key'|'trap'
+    def __init__(self, id, type, pos, hidden=False, params=None):
+        self.id = id
+        self.type = type        # 'weapon'|'potion'|'key'|'trap'
         self.pos = pos
         self.hidden = hidden
         self.params = params or {}
         self.picked = False
         self.one_time_used = False  # trap用
+    
+    def __repr__(self):
+        return f"Item(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
 
 
 class Door:
@@ -147,19 +249,19 @@ def print_game_text(file_path):
     print(text)
 
 
-def read_map_data(file_path: str) -> tuple[list[list[str]], dict[str, tuple[int, int]]]:
+def read_map_data(file_path: str) -> tuple[list[list[str]], str]:
+    """
+    map_txt を読み、[grid] と [info] を処理する。
+    - [grid] は # と . のみ（検証は最小限）
+    - [info] は json=xxx.json だけを見る
+    返り値: (grid: List[List[str]], json_path: str)
+    """
     with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
-    
-    buckets = {
-        'grid':[], 'info':[], 'items':[], 
-        'monsters':[], 'doors':[], 'chests':[], 
-        'teleports':[], 'goal':[], 'gimmicks':[], 'rule':[]}
 
-    in_grid_section = False
-    in_info_section = False
-    in_rule_section = False
+    section = None
     grid = []
+    json_path = ""
     info = {}
 
     for line in lines:
@@ -168,39 +270,21 @@ def read_map_data(file_path: str) -> tuple[list[list[str]], dict[str, tuple[int,
             continue
 
         if line == "[grid]":
-            in_grid_section = True
-            in_info_section = False
-            in_rule_section = False
+            section = 'grid'
             continue
         elif line == "[info]":
-            in_grid_section = False
-            in_info_section = True
-            in_rule_section = False
-            continue
-        elif line == "[rule]":
-            in_grid_section = False
-            in_info_section = False
-            in_rule_section = True
+            section = 'info'
             continue
 
-        if in_grid_section:
-            # グリッドデータの処理
+        if section == 'grid':
             grid.append(list(line))
             continue
-
-        elif in_info_section:
-            # print(line)
-            # 情報データの処理
-            tmp = line.split(": ")
-            if len(tmp) == 2:
-                info[tmp[0]] = tuple(map(int, tmp[1].split(", ")))
+        elif section == 'info':
+            if line.startswith("json="):
+                json_path = line.split("=", 1)[1].strip()
                 continue
-        elif in_rule_section:
-            # ルールデータの処理（現状未使用）
-            continue
 
-    
-    return grid, info
+    return grid, json_path
 
 
 def print_grid(grid, info, player: Player = None):
@@ -221,14 +305,14 @@ def print_grid(grid, info, player: Player = None):
         print("".join(row))
 
 
+# プレイヤーからのコマンド入力を受け取る
 def read_player_command() -> str:
     while True:
-        command = input("Enter command (w/a/s/d to move, q to quit): ")
-        command = command.lower()
-        if command in ['w', 'a', 's', 'd', 'q']:
-            break
-        print("Invalid command! Please enter w, a, s, d, or q.")
-    return command
+        command = input("(w/a/s/d 移動, u:ポーション, q:終了) > ").strip().lower()
+        if command in ['w', 'a', 's', 'd', 'u', 'q']:
+            return command
+        print("不正ななコマンドです。{w, a, s, d, u, q} のいずれかを入力してください。")
+        # print("Invalid command! Please enter w, a, s, d, u, or q.")
 
 
 # 移動可能か判定し、可能なら移動先の座標を返す
@@ -320,6 +404,14 @@ def main():
 
             print_grid(grid, info, player)
 
+
+def tmp():
+    floor = Floor(sample_map_data)
+    # print_grid(floor.grid, )
+    floor.print_info()
+    # floor.print_grid()
+
 if __name__ == "__main__":
-    main()
+    # main()
     #tmp_run_game()
+    tmp()

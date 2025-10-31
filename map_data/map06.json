@@ -1,0 +1,47 @@
+{
+    "name": "Glacier Corridor",
+    "reveal_hidden": true,
+    "start": [13, 14],
+
+    "goal": {
+        "type": "reach_and_keys",
+        "multiple": true,
+        "pos": [[7, 14], [8, 14], [7, 15], [8, 15]],
+        "keys": ["gold"]
+    },
+
+    "items": [
+        {"id": "W1", "type": "weapon", "pos": [1,2], "hidden": false, "params": {"atk": 5}},
+        {"id": "P1", "type": "potion", "pos": [1,10], "hidden": true,  "params": {}},
+        {"id": "K_gold", "type": "key", "pos": [4,5], "hidden": false, "params": {"key_id": "gold"}},
+        {"id": "TR1", "type": "trap", "pos": [1,13], "hidden": false, "params": {"dmg": 10, "once": 1}}
+    ],
+
+    "monsters": [
+        {"id": "M1", "pos": [2,8],  "ai": "static", "move": 0, "drop": ["P1"]},
+        {"id": "M2", "pos": [6,4],  "ai": "random", "params": {"p": 0.5}, "move": 1, "drop": ["gen:weapon:+3"]},
+        {"id": "M3", "pos": [8,6],  "ai": "chase",  "params": {"range": 6}, "move": 1, "drop": ["K_gold"]},
+        {"id": "M4", "pos": [10,11], "ai": "patrol", "params": {"path": [[10,11],[10,15],[8,15],[8,11]]}, "move": 2, "drop": ["gen:potion"]}
+    ],
+
+    "doors": [
+        {"id": "D_gold", "pos": [10,15], "key": "gold", "locked": true}
+    ],
+
+    "chests": [
+        {"id": "C1", "pos": [5,6], "key": "red", "opened": false, "contents": ["gen:weapon:+7", "P1"]},
+        {"id": "C2", "pos": [12,8], "opened": false, "contents": ["K_gold"]}
+    ],
+
+    "teleports": [
+        {"id": "T1", "src": [7,12], "dst": [3,2], "bi": true},
+        {"id": "T2", "src": [1,5],  "dst": [11,3], "bi": false}
+    ],
+
+    "gimmicks": {
+        "ice": [[1,2],[1,3],[1,4],[1,5],[2,6],[3,6],[6,3],[6,4],[6,5],[7,2],[8,6],[10,12],[10,14]],
+        "hp_drain": 1,
+        "monster_ice": true,
+        "trap_cells": [[3,1]]
+    }
+}
