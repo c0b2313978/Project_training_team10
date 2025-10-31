@@ -1,0 +1,11 @@
+
+———————————————
+           操作方法 / Controls
+———————————————
+    W : 上に移動（Move Up）
+    S : 下に移動（Move Down）
+    A : 左に移動（Move Left）
+    D : 右に移動（Move Right）
+    T : ポーション使用（Use Potion）
+———————————————
+   [Press Enter to Start]
