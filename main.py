@@ -1,9 +1,7 @@
 # Team 10
 from pprint import pprint
 import json
-import sys
 import random
-import re
 import time
 
 TARGET_CLEAR = 5  # クリア必要フロア数
