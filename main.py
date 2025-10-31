@@ -17,7 +17,6 @@ TILE_SYMBOLS = {
     'P': 'Potion',
     'W': 'Weapon',
     'T': 'Teleportation'
-    
 } 
 
 MAP_DIR_PATH = "map_data/"
@@ -121,7 +120,7 @@ class Floor:
     def _items_init(self):
         items_data = self.info.get('items', [])
         for item_data in items_data:
-            item = Item(**item_data)
+            item = Item.create_item(**item_data)
             self.items[item.id] = item
     
     # ===== モンスター情報初期化 =====
@@ -195,6 +194,8 @@ class Floor:
 
             print("".join(row))
 
+
+# ==================== アイテムクラス群 ====================
 class Item:
     def __init__(self, id, type, pos, hidden=False, params=None):
         self.id = id                # 一意なID
@@ -207,6 +208,53 @@ class Item:
     def __repr__(self):
         return f"Item(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
 
+    @classmethod
+    def create_item(cls, id, type, pos, hidden=False, params=None) -> 'Item':
+        """ アイテムタイプに応じたインスタンスを生成するファクトリメソッド """
+        item_class = ITEM_CLASS_MAP.get(type, Item)
+        return item_class(id, type, pos, hidden, params)
+
+class Key(Item):
+    def apply_effect(self, player: 'Player') -> None:
+        """ プレイヤーにキー効果を適用する """
+        pass
+
+    def __repr__(self):
+        return f"Key(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
+
+class Weapon(Item):
+    def apply_effect(self, player: 'Player') -> None:
+        """ プレイヤーに装備効果を適用する """
+        pass
+
+    def __repr__(self):
+        return f"Weapon(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
+
+class Potion(Item):
+    def apply_effect(self, player: 'Player') -> None:
+        """ プレイヤーにポーション効果を適用する """
+        pass
+
+    def __repr__(self):
+        return f"Potion(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
+
+class Trap(Item):
+    def apply_effect(self, player: 'Player') -> None:
+        """ プレイヤーに罠効果を適用する """
+        pass
+
+    def __repr__(self):
+        return f"Trap(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
+
+# アイテムタイプとクラスのマッピング
+ITEM_CLASS_MAP = {
+    "key": Key,
+    "weapon": Weapon,
+    "potion": Potion,
+    "trap": Trap,
+}
+
+# ==================== ギミッククラス群 ====================
 
 class Door:
     def __init__(self, id, pos, requires_key=None, opened=False):
@@ -240,17 +288,6 @@ class Teleport:
     def __repr__(self):
         return f"Teleport(id={self.id}, source={self.source}, target={self.target}, requires_key={self.requires_key}, bidirectional={self.bidirectional})"
 
-# class Weapon(Item):
-#     def __init__(self) -> None:
-#         super().__init__()
-
-# class Potion(Item):
-#     def __init__(self) -> None:
-#         super().__init__()
-
-# class Trap(Item):
-#     def __init__(self) -> None:
-#         super().__init__()
 
 class Monster:
     def __init__(self, id, pos, ai_type, ai_params = {}, move_every=1, drop_list=[]):

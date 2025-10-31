@@ -7,16 +7,23 @@
 ## ディレクトリ構成（例）
 
 ```
-
-project/
-main.py               # 実行スクリプト（本READMEにある実装骨子）
-maps/
-map01.txt
-map01.json
-map02.txt
-map02.json
-map06.txt
-map06.json
+.
+├── README.md
+├── game_texts
+│   ├── Basic_rule.txt
+│   ├── Controls_guide.txt
+│   ├── Firstgame_ui.txt
+│   ├── Floor_rule.txt
+│   └── Opening.txt
+├── main.py                   # 実行ファイル
+└── map_data
+    ├── map01.txt
+    ├── map01.json
+    ├── map02.txt
+    ├── map02.json
+    ├── map03.txt
+    ├── map03.json
+    ├── ...
 
 ````
 
