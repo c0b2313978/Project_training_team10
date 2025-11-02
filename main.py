@@ -36,6 +36,8 @@ sample_map_data = MAP_DIR_PATH + "sample01.txt"
 
 class GameState:
     def __init__(self) -> None:
+        self.is_game_state = True  # ゲーム進行中フラグ
+
         # self.all_floors = random.sample(list(range(1, TOTAL_FLOORS + 1)), TARGET_CLEAR)  # クリア必要フロアリスト
         self.all_floors = list(range(1, TOTAL_FLOORS + 1))  # デバッグ用：全フロアクリア
         print(f"Selected Floors to Clear: {self.all_floors}")  # デバッグ用表示
@@ -46,12 +48,15 @@ class GameState:
         self.is_game_over = False  # ゲームオーバーフラグ
         self.is_game_cleared = False  # ゲームクリアフラグ
 
+        self.floor: 'Floor' = self.start_floor()  # 現在のフロアインスタンス
+        print("正常にフロアが開始されました。")  # デバッグ用表示
+        self.player: 'Player' = Player(self.floor.start)  # プレイヤーインスタンス
 
-
-    # def player_init(self, start_pos: tuple[int, int]) -> 'Player':
-    #     """ プレイヤーを初期化する """
-    #     player = Player(self.start_pos)
-    #     return player
+    # ====== ゲーム進行管理 ======
+    def game_state(self) -> bool:
+        """ ゲーム進行中かどうかを返す """
+        self.is_game_state = not (self.is_game_over or self.is_game_cleared)
+        return self.is_game_state
 
     def start_floor(self) -> 'Floor':
         """ 現在のフロアを開始する """
@@ -60,24 +65,88 @@ class GameState:
         floor = Floor(map_file_path, floor_id=floor_id)
         return floor
 
-    def complete_floor(self):
-        """ 現在のフロアをクリアする """
+    def next_floor(self):
+        """ フロアクリア後に呼ぶ。{TARGET_CLEAR}回クリアでゲームクリア """
         self.cleared_count += 1
         self.current_floor_index += 1
 
         if self.cleared_count >= TARGET_CLEAR:
             self.is_game_cleared = True
-            print("おめでとうございます！すべてのフロアをクリアしました！")
+            # print("おめでとうございます！すべてのフロアをクリアしました！")
         else:
             print(f"フロアクリア！ 残り {TARGET_CLEAR - self.cleared_count} 層です。")
     
-    def step_turn(self):
-        """ ターンを進める """
-        pass
+    # ===== 入出力 =====
+    def read_command(self) -> str:
+        """ プレイヤーからのコマンド入力を受け取る """
+        while True:
+            command = input("(w/a/s/d 移動, u:ポーション, q:終了) > ").strip().lower()
+            if command in ['w', 'a', 's', 'd', 'u', 'q']:
+                return command
+            # print("不正ななコマンドです。{w, a, s, d, u, q} のいずれかを入力してください。")
 
-    def check_game_over(self):
+    # ===== ゲーム状態更新 ======
+    def step_turn(self, command = "") -> None:
+        """ 1ターン（プレイヤー入力 -> セルイベント -> 敵行動 -> 判定） """
+        self.floor.print_grid(self.player)
+        print()
+        self.player.print_status()
+        print()
+
+        command = self.read_command()  # コマンド入力
+
+        if command == 'q':
+            print("ゲーム終了します。")
+            self.is_game_over = True
+            return
+
+        elif command == 'u':
+            potion_id = input("使用するポーションのIDを入力してください: ").strip()
+            self.player.use_potion(potion_id)
+            return
+        
+        new_position = try_move_player(self.player, command, self.floor.grid)
+        if new_position is not None:
+            self.player.position = new_position
+        else:
+            print("その方向には移動できません！")
+            return
+        
+        # セルに入った際のイベント処理
+        self.floor.enter_cell(self.player)
+
+        # ゴール判定
+        is_goal, goal_message = self.floor.check_goal(self.player)
+        if is_goal:
+            print("ゴールに到達しました！フロアクリア！")
+            # print(goal_message)
+            self.next_floor()  # フロアクリア処理
+            if not self.is_game_cleared:
+                self.floor = self.start_floor()
+                self.player.position = self.floor.start
+            return
+        else:
+            if goal_message:
+                print(goal_message)
+
+        self.check_game_over()
+        self.check_game_cleared()
+    
+
+    def check_game_over(self) -> bool:
         """ ゲームオーバー判定 """
-        pass
+        if self.player.hp <= 0:
+            self.is_game_over = True
+            print("あなたは力尽きました。ゲームオーバーです。")
+            return True
+        return False
+
+    def check_game_cleared(self) -> bool:
+        """ ゲームクリア判定 """
+        if self.is_game_cleared:
+            # print("おめでとうございます！すべてのフロアをクリアしました！")
+            return True
+        return False
 
 
 # ==================== フロアクラス ====================
@@ -381,9 +450,10 @@ class Potion(Item):
         return f"Potion(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
 
 class Trap(Item):
+    DEFAULT_DAMAGE = 10
     def apply_effect(self, player: 'Player') -> None:
         """ プレイヤーに罠効果を適用する """
-        damage = self.params.get('damage', 10)  # ダメージ量（仮）
+        damage = self.params.get('damage', self.DEFAULT_DAMAGE)  # ダメージ量
         player.hp -= damage
         print(f"罠にかかりました！ {damage} のダメージを受けました。")
 
@@ -636,7 +706,7 @@ def tmp_run_game():
             print("その方向には移動できません！")
             continue
 
-        # セルに入った際のイベント処理
+    # セルに入った際のイベント処理
         floor.enter_cell(player)
 
         # ゴール判定
@@ -653,51 +723,24 @@ def tmp_run_game():
         # print()
 
 
-# Main ループ
-def main():
-    print_game_text(TEXT_DIR_PATH+"Firstgame_ui.txt")
-    time.sleep(1)
-    print_game_text(TEXT_DIR_PATH+"Basic_rule.txt")
-    time.sleep(1)
-    print_game_text(TEXT_DIR_PATH+"Opening.txt")
-    time.sleep(1)
-    # for i in range(5):
-    #     palying_map = random_select_map()
-    #     grid, info = read_map_data(MAP_DIR_PATH + palying_map[i])
-    #     # print(info)
-    #     # return
-    #     player = Player(start=info['start'])
-
-    #     print_grid(grid, info, player)
-
-    #     while True:
-    #         command = read_player_command()
-    #         if command == 'q':
-    #             print("Quitting the game.")
-    #             break
-
-    #         new_position = try_move_player(player, command, grid)
-    #         if new_position is not None:
-    #             player.position = new_position
-    #         else:
-    #             print("Cannot move in that direction!")
-            
-    #         if player.position == info['goal']:
-    #             print("Reached the goal!")
-    #             break
-
-    #         print_grid(grid, info, player)
+# # Main ループ
+# def main():
+#     print_game_text(TEXT_DIR_PATH+"Firstgame_ui.txt")
+#     time.sleep(1)
+#     print_game_text(TEXT_DIR_PATH+"Basic_rule.txt")
+#     time.sleep(1)
+#     print_game_text(TEXT_DIR_PATH+"Opening.txt")
+#     time.sleep(1)
 
 
 def tmp():
-    map01 = MAP_DIR_PATH + "map01.txt"
-    floor = Floor(map01)
-    # floor = Floor(sample_map_data)
-    # print_grid(floor.grid, )
-    floor.print_info()
-    floor.print_grid()
+    game_state = GameState()
+    while game_state.game_state():
+        # command = game_state.read_command()
+        game_state.step_turn()
+
 
 if __name__ == "__main__":
     # main()
-    tmp_run_game()
-    # tmp()
+    # tmp_run_game()
+    tmp()
