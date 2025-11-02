@@ -306,7 +306,6 @@ class Floor:
                 player.add_item(item)
                 item.picked = True
                 print(f"アイテム {item.id} ({item.type}) を取得しました。")
-        
 
     # ===== ゴール判定 =====
     def check_goal(self, player: 'Player') -> tuple[bool, str]:
