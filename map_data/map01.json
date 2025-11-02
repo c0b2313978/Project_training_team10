@@ -3,8 +3,9 @@
     "reveal_hidden": true,
     "start": [1, 1],
     "goal": {
-        "type": "reach",
-        "pos": [1, 8]
+        "type": "reach_and_keys",
+        "pos": [1, 8],
+        "keys": ["key01"]
     },
     "items": [
         {"id": "key01", "type": "key", "pos": [7, 10], "hidden": true, "params": {"key_id": "01"}},

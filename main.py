@@ -5,7 +5,7 @@ import random
 import time
 
 TARGET_CLEAR = 5  # クリア必要フロア数
-TOTAL_FLOORS = 8
+TOTAL_FLOORS = 8  # 有効な総フロア数
 DIRECTIONS = {'w': (-1,0), 's': (1,0), 'a': (0, -1), 'd': (0,1)}  # 移動方向
 TILE_SYMBOLS = {
     '#': 'Wall',
@@ -36,21 +36,62 @@ sample_map_data = MAP_DIR_PATH + "sample01.txt"
 
 class GameState:
     def __init__(self) -> None:
-        self.cleared_count = 0
-        self.current_floor_index = -1
+        # self.all_floors = random.sample(list(range(1, TOTAL_FLOORS + 1)), TARGET_CLEAR)  # クリア必要フロアリスト
+        self.all_floors = list(range(1, TOTAL_FLOORS + 1))  # デバッグ用：全フロアクリア
+        print(f"Selected Floors to Clear: {self.all_floors}")  # デバッグ用表示
+
+        self.cleared_count = 0  # クリア済みフロア数
+        self.current_floor_index = 0  # 現在のフロアインデックス
 
         self.is_game_over = False  # ゲームオーバーフラグ
         self.is_game_cleared = False  # ゲームクリアフラグ
-        
-        self.all_floors = [random.sample(range(1, TOTAL_FLOORS + 1), TOTAL_FLOORS)]
 
+
+
+    # def player_init(self, start_pos: tuple[int, int]) -> 'Player':
+    #     """ プレイヤーを初期化する """
+    #     player = Player(self.start_pos)
+    #     return player
+
+    def start_floor(self) -> 'Floor':
+        """ 現在のフロアを開始する """
+        floor_id = self.all_floors[self.current_floor_index]
+        map_file_path = MAP_DIR_PATH + f"map0{floor_id}.txt"
+        floor = Floor(map_file_path, floor_id=floor_id)
+        return floor
+
+    def complete_floor(self):
+        """ 現在のフロアをクリアする """
+        self.cleared_count += 1
+        self.current_floor_index += 1
+
+        if self.cleared_count >= TARGET_CLEAR:
+            self.is_game_cleared = True
+            print("おめでとうございます！すべてのフロアをクリアしました！")
+        else:
+            print(f"フロアクリア！ 残り {TARGET_CLEAR - self.cleared_count} 層です。")
+    
+    def step_turn(self):
+        """ ターンを進める """
+        pass
+
+    def check_game_over(self):
+        """ ゲームオーバー判定 """
+        pass
+
+
+# ==================== フロアクラス ====================
 
 class Floor:
     """
     map_txt から読み込んだ1フロア分の全データ（grid以外はJSONから供給）
+    grid: 2次元リスト（#と.のみ）
+    json_path: JSONデータのパス
     以下はJSONで与える:
         name, reveal_hidden, start, goal, goal.type/keys
         items, monsters, doors, chests, teleports, gimmicks
+    
+    フロア内のイベント処理はここで行う。
     """
     def __init__(self, map_file_path: str, specific_json_path: str = "", floor_id: int = -1) -> None:
         self.floor_id = floor_id  # フロアID（任意指定）
@@ -101,6 +142,7 @@ class Floor:
         # ===== ギミック =====
         # TODO: ギミック初期化
 
+    # ===== JSONデータ読み込み =====
     def _read_json_data(self, json_path: str) -> dict:
         """ JSONデータを読み込み、辞書で返す。 """
         with open(json_path, 'r', encoding='utf-8') as f:
@@ -218,7 +260,7 @@ class Floor:
                 symbols[tp.target] = ENTITY_SYMBOLS["teleport"](tp)
         return symbols
 
-
+    # ===== マップ表示 =====
     def print_grid(self, player: 'Player' = None):
         """マップ全体を表示する"""
         entity_symbols = self._collect_entity_symbols()
@@ -229,8 +271,8 @@ class Floor:
                 pos = (i, j)
                 if player is not None and pos == player.position:  # プレイヤー位置
                     row.append('@')
-                elif pos == self.start:  # スタート位置
-                    row.append('S')  # TODO: もしかしたらいらないかも？
+                # elif pos == self.start:  # スタート位置
+                #     row.append('S')  # TODO: もしかしたらいらないかも？
                 elif pos in self.goal['pos']:  # ゴール位置
                     row.append('G')
                 elif pos in entity_symbols:  # アイテム・モンスター・ギミック
@@ -241,6 +283,59 @@ class Floor:
                     row.append(self.grid[i][j])  # 壁
 
             print("".join(row))
+    
+    # ==================== イベント処理 ====================
+    # ===== 踏んだ瞬間の処理 を一括で行う =====
+    def enter_cell(self, player: 'Player') -> None:
+        """ プレイヤーがセルに入った際のイベント処理 """
+        # アイテム取得・罠発動
+        for item in self.items.values():
+            if (item.pos != player.position) or item.picked:
+                continue  # 位置が違うか、既に回収済み
+
+            if item.hidden and not self.reveal_hidden:
+                continue  # 隠しアイテムは発見されない
+
+            if item.type == 'trap':
+                # 罠効果適用
+                item.apply_effect(player)
+                item.picked = True  # 罠は一度きり
+                print(f"罠 {item.id} が発動しました！")
+            else:
+                # アイテム取得処理
+                player.add_item(item)
+                item.picked = True
+                print(f"アイテム {item.id} ({item.type}) を取得しました。")
+        
+
+    # ===== ゴール判定 =====
+    def check_goal(self, player: 'Player') -> tuple[bool, str]:
+        goal_message = "ゴール条件を満たしました！"
+
+        # reach | keys_only | reach_and_keys
+        if self.goal['type'] == 'reach':
+            if player.position not in self.goal['pos']:
+                return False, ""
+            else:
+                return True, goal_message
+
+        elif self.goal['type'] == 'keys_only':
+            for key_id in self.goal['keys']:
+                if key_id not in player.inventory:
+                    return False, "必要な鍵が足りません。"
+            return True, goal_message
+
+        elif self.goal['type'] == 'reach_and_keys':
+            if player.position not in self.goal['pos']:
+                return False, ""
+            for key_id in self.goal['keys']:
+                if key_id not in player.inventory:
+                    return False, "必要な鍵が足りません。"
+            return True, goal_message
+
+        else:
+            return False, "ゴール条件を満たしていません。"
+
 
 
 # ==================== アイテムクラス群 ====================
@@ -273,7 +368,7 @@ class Key(Item):
 class Weapon(Item):
     def apply_effect(self, player: 'Player') -> None:
         """ プレイヤーに装備効果を適用する """
-        pass
+        player.attack += self.params.get('attack_bonus', 10)  # 攻撃力ボーナス（仮）
 
     def __repr__(self):
         return f"Weapon(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
@@ -281,7 +376,7 @@ class Weapon(Item):
 class Potion(Item):
     def apply_effect(self, player: 'Player') -> None:
         """ プレイヤーにポーション効果を適用する """
-        pass
+        player.hp = player.MAX_HP  # HP全回復（仮）
 
     def __repr__(self):
         return f"Potion(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
@@ -289,7 +384,9 @@ class Potion(Item):
 class Trap(Item):
     def apply_effect(self, player: 'Player') -> None:
         """ プレイヤーに罠効果を適用する """
-        pass
+        damage = self.params.get('damage', 10)  # ダメージ量（仮）
+        player.hp -= damage
+        print(f"罠にかかりました！ {damage} のダメージを受けました。")
 
     def __repr__(self):
         return f"Trap(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
@@ -337,6 +434,7 @@ class Teleport:
         return f"Teleport(id={self.id}, source={self.source}, target={self.target}, requires_key={self.requires_key}, bidirectional={self.bidirectional})"
 
 
+# ==================== モンスタークラス ====================
 class Monster:
     def __init__(self, id, pos, ai_type, ai_params = {}, move_every=1, drop_list=[]):
         self.id = id  # 一意なID
@@ -374,7 +472,7 @@ class Monster:
         """ ターンカウンターをリセットする """
         self.turn_counter = 0
 
-
+# ==================== ギミック全体クラス ====================
 class Gimmicks:
     def __init__(self):
         self.ice_regions = []      # list of sets/rects → 下でセル集合化
@@ -385,6 +483,7 @@ class Gimmicks:
         self.trap_cells = set()    # 地形的罠セル（ダメ10など簡易）
 
 
+# ==================== プレイヤークラス ====================
 class Player:
     MAX_HP = 100
     BASE_ATK = 10
@@ -394,18 +493,45 @@ class Player:
         self.position = start_pos  # (row, col)
         # self.keys = set()
         self.inventory = {}  # id -> Item
-
-
-
-#ランダムにマップを選択しリストにまとめ
-def random_select_map():
-    # map01 ~ map08 のリストを作成
-    maps = [f"map{str(i).zfill(2)}.txt" for i in range(1, 9)]
+        self.visited_cells = set()  # 訪問済みセル集合
     
-    # ランダムに5つ選ぶ（重複なし）
-    selected_maps = random.sample(maps, 5)
+    # ====== ステータス表示 ======
+    def print_status(self) -> None:
+        """ プレイヤーステータスを表示する """
+        print(f"HP: {self.hp}/{Player.MAX_HP}, Attack: {self.attack}")
+        self.print_inventory()
     
-    return selected_maps
+    # ====== インベントリ 管理 ======
+    def print_inventory(self) -> None:
+        """ インベントリを表示する """
+        print("Inventory:")
+        if not self.inventory:
+            print("\t(空)")
+            return
+        for id, item in self.inventory.items():
+            print(f"\t{item}: {id}")
+    
+    def add_item(self, item: Item) -> None:  # TODO: アイテムの種類によって保存場所変えるかも
+        """ アイテムをインベントリに追加する """
+        self.inventory[item.id] = item
+    
+    def use_potion(self, item_id: str) -> bool:
+        """ ポーションを使用する """
+        item = self.inventory.get(item_id)
+        if item is None or item.type != 'potion':
+            print("そのポーションは持っていません。")
+            return False
+        
+        # ポーション効果適用
+        item.apply_effect(self)
+        print(f"ポーション {item_id} を使用しました。")
+        
+        # インベントリから削除
+        del self.inventory[item_id]
+        return True
+    
+
+
 
 
 #ファイル読み、文字出力
@@ -428,7 +554,6 @@ def read_map_data(file_path: str) -> tuple[list[list[str]], str]:
     section = None
     grid = []
     json_path = ""
-    info = {}
 
     for line in lines:
         line = line.rstrip("\n")
@@ -451,24 +576,6 @@ def read_map_data(file_path: str) -> tuple[list[list[str]], str]:
                 continue
 
     return grid, json_path
-
-
-# def print_grid(grid, info, player: Player = None):
-#     for i in range(len(grid)):
-#         row = []
-#         for j in range(len(grid[i])):
-#             if player is not None and (i, j) == player.position:
-#                 row.append('@')
-#             elif (i, j) == info.get('start'):
-#                 row.append('S')
-#             elif (i, j) == info.get('goal'):
-#                 row.append('G')
-#             elif grid[i][j] == '.':
-#                 row.append(' ')
-#             else:
-#                 row.append(grid[i][j])
-
-#         print("".join(row))
 
 
 # プレイヤーからのコマンド入力を受け取る
@@ -507,28 +614,44 @@ def tmp_run_game():
     floor = Floor(map01)
     player = Player(start_pos=floor.start)
 
-    floor.print_grid(player)
-    print()
-
     while True:
-        command = read_player_command()
+        floor.print_grid(player)
+        print()
+        player.print_status()
+        print()
+
+        command = read_player_command()  # コマンド入力
         if command == 'q':
             print("ゲーム終了します。")
             break
+
+        elif command == 'u':
+            potion_id = input("使用するポーションのIDを入力してください: ").strip()
+            player.use_potion(potion_id)
+            continue
 
         new_position = try_move_player(player, command, floor.grid)
         if new_position is not None:
             player.position = new_position
         else:
             print("その方向には移動できません！")
+            continue
 
-        if player.position == floor.info['goal']:
-            print("ゴールに到達しました！")
+        # セルに入った際のイベント処理
+        floor.enter_cell(player)
+
+        # ゴール判定
+        is_goal, goal_message = floor.check_goal(player)
+        if is_goal:
+            print("ゴールに到達しました！フロアクリア！")
+            # print(goal_message)
             break
+        elif goal_message:
+            print(goal_message)
         
-        print()
-        floor.print_grid(player)
-        print()
+        # print()
+        # floor.print_grid(player)
+        # print()
 
 
 # Main ループ
