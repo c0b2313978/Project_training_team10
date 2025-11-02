@@ -1,0 +1,20 @@
+{
+    "name": "map01",
+    "reveal_hidden": true,
+    "start": [1, 1],
+    "goal": {
+        "type": "reach_and_keys",
+        "pos": [1, 8],
+        "keys": ["key01"]
+    },
+    "items": [
+        {"id": "key01", "type": "key", "pos": [7, 10], "hidden": true, "params": {"key_id": "01"}},
+        {"id": "weapon01", "type": "weapon", "pos": [7, 3], "hidden": false, "params": {"atk": 5}},
+        {"id": "trap01", "type": "trap", "pos": [1, 6], "hidden": false, "params": {"damage": 100, "once": 1}},
+        {"id": "potion01", "type": "potion", "pos": [3, 10], "hidden": false}
+    ],
+    "monsters": [
+        {"id": "monster01", "pos": [5, 7],  "ai_type": "static", "move_every": 0}
+    ],
+    "rule": "モンスターは動かない。\nしかし、アイテムをどこかに隠している。"
+}

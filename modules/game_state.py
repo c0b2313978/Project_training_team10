@@ -3,14 +3,14 @@ from modules.player import Player
 from modules.constants import MAP_DIR_PATH, TARGET_CLEAR, TOTAL_FLOORS, DIRECTIONS
 
 class GameState:
-    def __init__(self, requires_map_file_path: str = "") -> None:
+    def __init__(self, requires_map_file_path: list[str] = []) -> None:
         self.is_game_state = True  # ゲーム進行中フラグ
 
-        if requires_map_file_path:  # デバッグ用：特定フロア指定
+        self.requires_map_file_path = requires_map_file_path
+        if self.requires_map_file_path:  # デバッグ用：特定フロア指定
             global TARGET_CLEAR
-            TARGET_CLEAR = 1  # デバッグ用：クリア必要フロア数
-            self.all_floors = [-1]  # デバッグ用：特定フロア指定
-            self.requires_map_file_path = requires_map_file_path
+            TARGET_CLEAR = len(self.requires_map_file_path)  # デバッグ用：クリア必要フロア数
+            self.all_floors = self.requires_map_file_path  # デバッグ用：特定フロア指定
         else:
             # self.all_floors = random.sample(list(range(1, TOTAL_FLOORS + 1)), TARGET_CLEAR)  # クリア必要フロアリスト
             self.all_floors = list(range(1, TOTAL_FLOORS + 1))  # デバッグ用：全フロアクリア
@@ -34,10 +34,10 @@ class GameState:
 
     def start_floor(self) -> 'Floor':
         """ 現在のフロアを開始する """
-        floor_id = self.all_floors[self.current_floor_index]  # 現在のフロアID
+        floor_id = str(self.all_floors[self.current_floor_index])  # 現在のフロアID
         
-        if floor_id == -1:
-            map_file_path = self.requires_map_file_path  # デバッグ用：特定フロア指定
+        if self.requires_map_file_path:  # デバッグ用：特定フロア指定
+            map_file_path = self.requires_map_file_path[self.current_floor_index]
         else:
             map_file_path = MAP_DIR_PATH + f"map0{floor_id}.txt"  # マップファイルパス
         floor = Floor(map_file_path, floor_id=floor_id)  # フロアインスタンス生成
@@ -108,6 +108,21 @@ class GameState:
         
         # セルに入った際のイベント処理
         self.floor.enter_cell(self.player)
+
+        # モンスター行動
+        for monster in self.floor.monsters.values():
+            if not monster.alive:
+                continue
+            if monster.increment_turn():  # move_every に達したら移動
+                monster.pos = monster.monster_next_move(self.player.position, self.floor.grid)
+        
+        # モンスターとの衝突判定
+        for monster in self.floor.monsters.values():
+            if not monster.alive:
+                continue
+            if monster.pos == self.player.position:
+                print(f"モンスター {monster.id} と遭遇しました！戦闘開始！  - game_state.py - step_turn()")
+                self.floor.battle_monster(self.player, monster)
 
         # ゴール判定
         is_goal, goal_message = self.floor.check_goal(self.player)

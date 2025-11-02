@@ -16,7 +16,8 @@ from modules.constants import TEXT_DIR_PATH, sample_map_data
 #     time.sleep(1)
 
 def tmp():
-    game_state = GameState(requires_map_file_path=sample_map_data)  # デバッグ用：特定フロア指定
+    game_state = GameState(requires_map_file_path=["map_data/sample01.txt", "map_data/sample06.txt"])  # デバッグ用：特定フロア指定
+    # game_state = GameState(requires_map_file_path=sample_map_data)  # デバッグ用：特定フロア指定
     while game_state.game_state():
         # command = game_state.read_command()
         game_state.step_turn()

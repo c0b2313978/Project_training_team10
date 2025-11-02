@@ -1,14 +1,14 @@
 ## TODO（ゲーム進行）
-- 5層選定と進行管理: GameState と random_select_map が繋がっておらず、5層を順番に遊ぶ仕組みがない（main.py:37, main.py:401）。
-- フロア遷移とクリア判定: tmp_run_game が単一マップ固定で、ゴール到達時に cleared_count や TARGET_CLEAR を使った判定が行われていない（main.py:7, main.py:504）。
-- ゴール条件の拡張: goal.type が reach のみ想定で、keys_only / reach_and_keys / multiple を判定していない（main.py:111, main.py:525）。
-- ゲームオーバー処理: HP0判定と is_game_over フラグ更新が存在せず、敗北時の遷移が未実装（main.py:37, main.py:392）。
+- ~~5層選定と進行管理: GameState と random_select_map が繋がっておらず、5層を順番に遊ぶ仕組みがない（main.py:37, main.py:401）。~~
+- ~~フロア遷移とクリア判定: tmp_run_game が単一マップ固定で、ゴール到達時に cleared_count や TARGET_CLEAR を使った判定が行われていない（main.py:7, main.py:504）。~~
+- ~~ゴール条件の拡張: goal.type が reach のみ想定で、keys_only / reach_and_keys / multiple を判定していない（main.py:111, main.py:525）。~~
+- ~~ゲームオーバー処理: HP0判定と is_game_over フラグ更新が存在せず、敗北時の遷移が未実装（main.py:37, main.py:392）。~~
 
 ## TODO（プレイヤー・アイテム）
-- アイテム効果適用: Key/Weapon/Potion/Trap.apply_effect が未実装で、攻撃力上昇やダメージ、鍵取得が反映されない（main.py:265, main.py:274, main.py:282, main.py:289）。
-- ポーション使用コマンド: u が入力チェックのみで、インベントリからの消費やHP回復を行っていない（main.py:474）。
+- ~~アイテム効果適用: Key/Weapon/Potion/Trap.apply_effect が未実装で、攻撃力上昇やダメージ、鍵取得が反映されない（main.py:265, main.py:274, main.py:282, main.py:289）。~~
+- ~~ポーション使用コマンド: u が入力チェックのみで、インベントリからの消費やHP回復を行っていない（main.py:474）。~~
 - 鍵・インベントリ管理: Player に鍵保管やアイテムスタック処理がなく、ドアや宝箱と連動できない（main.py:388）。
-- 罠ダメージ: 罠アイテムに踏んだタイミングでHPを減らす処理が存在しない（main.py:289）。
+- ~~罠ダメージ: 罠アイテムに踏んだタイミングでHPを減らす処理が存在しない（main.py:289）。~~
 - 隠しアイテム発見: reveal_hidden の表示はあるが、踏んだ際に正体を公開して picked を更新する仕組みがない（main.py:192）。
 
 ## TODO（モンスター・戦闘）

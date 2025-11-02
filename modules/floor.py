@@ -1,5 +1,6 @@
 # ==================== フロアクラス ====================
 import json
+from pprint import pprint
 from modules.items import Item
 from modules.objects import Door, Chest, Teleport, Gimmicks
 from modules.monsters import Monster
@@ -26,7 +27,7 @@ class Floor:
     
     フロア内のイベント処理はここで行う。
     """
-    def __init__(self, map_file_path: str, specific_json_path: str = "", floor_id: int = -1) -> None:
+    def __init__(self, map_file_path: str, specific_json_path: str = "", floor_id: str = "-1") -> None:
         self.floor_id = floor_id  # フロアID（任意指定）
 
         # ===== マップ読み込み =====
@@ -238,6 +239,51 @@ class Floor:
                 player.add_item(item)
                 item.picked = True
                 print(f"アイテム {item.id} ({item.type}) を取得しました。")
+
+    # # ===== モンスターとの遭遇判定 =====
+    # def check_monster_encounter(self, player: 'Player') -> Monster | None:
+    #     """ プレイヤーがモンスターと遭遇したか判定し、遭遇した場合はそのモンスターを返す """
+    #     for monster in self.monsters.values():
+    #         if monster.alive and monster.pos == player.position:
+    #             return monster
+    #     return None
+    
+    # ===== モンスターとの戦闘処理 =====
+    def battle_monster(self, player: 'Player', monster: Monster) -> None:
+        """ プレイヤーとモンスターの戦闘処理 """
+        # print(f"モンスター {monster.id} と遭遇しました！ 戦闘開始！")
+
+        while player.hp > 0 and monster.hp > 0:
+            # プレイヤーの攻撃
+            monster.hp -= player.attack
+            print(f"あなたの攻撃！ モンスター {monster.id} に {player.attack} のダメージ！ (残りHP: {max(monster.hp, 0)})")
+            if monster.hp <= 0:
+                monster.alive = False
+                print(f"モンスター {monster.id} を倒しました！")
+                # ドロップアイテム処理
+                for drop_id in monster.drop_list:
+                    drop_item = self.items.get(drop_id)
+                    if drop_item and not drop_item.picked:
+                        player.add_item(drop_item)
+                        drop_item.picked = True
+                        print(f"モンスターがアイテム {drop_item.id} ({drop_item.type}) をドロップしました。取得しました！")
+                break
+
+            # モンスターの攻撃
+            player.hp -= monster.attack
+            print(f"モンスター {monster.id} の攻撃！ あなたは {monster.attack} のダメージを受けました！ (残りHP: {max(player.hp, 0)})")
+            if player.hp <= 0:
+                print("あなたは倒されてしまいました...")
+                break
+
+    # def generate_drop_items(self, monster: 'Monster') -> list[Item]:
+    #     """ モンスター撃破時のドロップアイテムリストを生成する """
+    #     drop_items = []
+    #     for drop_id in monster.drop_list:
+    #         drop_item = self.items.get(drop_id)
+    #         if drop_item and not drop_item.picked:
+    #             drop_items.append(drop_item)
+    #     return drop_items
 
     # ===== ゴール判定 =====
     def check_goal(self, player: 'Player') -> tuple[bool, str]:
