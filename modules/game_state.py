@@ -3,12 +3,18 @@ from modules.player import Player
 from modules.constants import MAP_DIR_PATH, TARGET_CLEAR, TOTAL_FLOORS, DIRECTIONS
 
 class GameState:
-    def __init__(self) -> None:
+    def __init__(self, requires_map_file_path: str = "") -> None:
         self.is_game_state = True  # ゲーム進行中フラグ
 
-        # self.all_floors = random.sample(list(range(1, TOTAL_FLOORS + 1)), TARGET_CLEAR)  # クリア必要フロアリスト
-        self.all_floors = list(range(1, TOTAL_FLOORS + 1))  # デバッグ用：全フロアクリア
-        print(f"Selected Floors to Clear: {self.all_floors}")  # デバッグ用表示
+        if requires_map_file_path:  # デバッグ用：特定フロア指定
+            global TARGET_CLEAR
+            TARGET_CLEAR = 1  # デバッグ用：クリア必要フロア数
+            self.all_floors = [-1]  # デバッグ用：特定フロア指定
+            self.requires_map_file_path = requires_map_file_path
+        else:
+            # self.all_floors = random.sample(list(range(1, TOTAL_FLOORS + 1)), TARGET_CLEAR)  # クリア必要フロアリスト
+            self.all_floors = list(range(1, TOTAL_FLOORS + 1))  # デバッグ用：全フロアクリア
+            print(f"Selected Floors to Clear: {self.all_floors}")  # デバッグ用表示
 
         self.cleared_count = 0  # クリア済みフロア数
         self.current_floor_index = 0  # 現在のフロアインデックス
@@ -28,9 +34,13 @@ class GameState:
 
     def start_floor(self) -> 'Floor':
         """ 現在のフロアを開始する """
-        floor_id = self.all_floors[self.current_floor_index]
-        map_file_path = MAP_DIR_PATH + f"map0{floor_id}.txt"
-        floor = Floor(map_file_path, floor_id=floor_id)
+        floor_id = self.all_floors[self.current_floor_index]  # 現在のフロアID
+        
+        if floor_id == -1:
+            map_file_path = self.requires_map_file_path  # デバッグ用：特定フロア指定
+        else:
+            map_file_path = MAP_DIR_PATH + f"map0{floor_id}.txt"  # マップファイルパス
+        floor = Floor(map_file_path, floor_id=floor_id)  # フロアインスタンス生成
         return floor
 
     def next_floor(self):
