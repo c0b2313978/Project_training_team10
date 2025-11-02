@@ -9,23 +9,36 @@
 ```
 .
 ├── README.md
+├── TODO.md
+├── main.py                   # 実行エントリ
+├── modules                   # ゲームロジック一式
+│   ├── constants.py
+│   ├── floor.py
+│   ├── game_state.py
+│   ├── items.py
+│   ├── monsters.py
+│   ├── objects.py
+│   ├── player.py
+│   └── read_map_data.py
 ├── game_texts
 │   ├── Basic_rule.txt
 │   ├── Controls_guide.txt
 │   ├── Firstgame_ui.txt
 │   ├── Floor_rule.txt
 │   └── Opening.txt
-├── main.py                   # 実行ファイル
-└── map_data
-    ├── map01.txt
-    ├── map01.json
-    ├── map02.txt
-    ├── map02.json
-    ├── map03.txt
-    ├── map03.json
-    ├── ...
-
-````
+├── map_data
+│   ├── map01.txt
+│   ├── map01.json
+│   ├── map02.txt
+│   ├── map02.json
+│   ├── sample01.txt
+│   ├── sample01.json
+│   ├── sample06.txt
+│   ├── sample06_2.json
+│   └── ...
+├── tmp.py                    # スタンドアロン検証用
+└── tmp.ipynb                 # Jupyter ノート
+```
 
 ---
 
