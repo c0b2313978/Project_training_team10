@@ -365,11 +365,10 @@ class Floor:
             if item.hidden and not self.reveal_hidden:
                 continue  # 隠しアイテムは発見されない
 
-            if item.type == 'trap':
-                # 罠効果適用
+            # 罠・武器の即時効果適用
+            if item.type == 'trap' or item.type == 'weapon':
                 item.apply_effect(player)
-                item.picked = True  # 罠は一度きり
-                print(f"罠 {item.id} が発動しました！")
+                item.picked = True  # 罠・武器は回収済みにする
             else:
                 # アイテム取得処理
                 player.add_item(item)
@@ -419,6 +418,10 @@ class Item:
     def __repr__(self):
         return f"Item(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
 
+    def apply_effect(self, player: 'Player') -> None:
+        """ プレイヤーにアイテム効果を適用する（サブクラスでオーバーライド） """
+        pass
+
     @classmethod
     def create_item(cls, id, type, pos, hidden=False, params=None) -> 'Item':
         """ アイテムタイプに応じたインスタンスを生成するファクトリメソッド """
@@ -434,9 +437,11 @@ class Key(Item):
         return f"Key(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
 
 class Weapon(Item):
+    DEFAULT_ATTACK = 10
     def apply_effect(self, player: 'Player') -> None:
         """ プレイヤーに装備効果を適用する """
-        player.attack += self.params.get('attack_bonus', 10)  # 攻撃力ボーナス（仮）
+        player.attack += self.params.get('attack_bonus', self.DEFAULT_ATTACK)  # 攻撃力ボーナス（仮）
+        print(f"武器を装備しました！ 攻撃力が {self.params.get('attack_bonus', self.DEFAULT_ATTACK)} 上昇しました。")
 
     def __repr__(self):
         return f"Weapon(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
