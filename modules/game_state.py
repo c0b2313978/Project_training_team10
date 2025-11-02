@@ -1,0 +1,156 @@
+from modules.floor import Floor
+from modules.player import Player
+from modules.constants import MAP_DIR_PATH, TARGET_CLEAR, TOTAL_FLOORS, DIRECTIONS
+
+class GameState:
+    def __init__(self) -> None:
+        self.is_game_state = True  # ゲーム進行中フラグ
+
+        # self.all_floors = random.sample(list(range(1, TOTAL_FLOORS + 1)), TARGET_CLEAR)  # クリア必要フロアリスト
+        self.all_floors = list(range(1, TOTAL_FLOORS + 1))  # デバッグ用：全フロアクリア
+        print(f"Selected Floors to Clear: {self.all_floors}")  # デバッグ用表示
+
+        self.cleared_count = 0  # クリア済みフロア数
+        self.current_floor_index = 0  # 現在のフロアインデックス
+
+        self.is_game_over = False  # ゲームオーバーフラグ
+        self.is_game_cleared = False  # ゲームクリアフラグ
+
+        self.floor: 'Floor' = self.start_floor()  # 現在のフロアインスタンス
+        print("正常にフロアが開始されました。")  # デバッグ用表示
+        self.player: 'Player' = Player(self.floor.start)  # プレイヤーインスタンス
+
+    # ====== ゲーム進行管理 ======
+    def game_state(self) -> bool:
+        """ ゲーム進行中かどうかを返す """
+        self.is_game_state = not (self.is_game_over or self.is_game_cleared)
+        return self.is_game_state
+
+    def start_floor(self) -> 'Floor':
+        """ 現在のフロアを開始する """
+        floor_id = self.all_floors[self.current_floor_index]
+        map_file_path = MAP_DIR_PATH + f"map0{floor_id}.txt"
+        floor = Floor(map_file_path, floor_id=floor_id)
+        return floor
+
+    def next_floor(self):
+        """ フロアクリア後に呼ぶ。{TARGET_CLEAR}回クリアでゲームクリア """
+        self.cleared_count += 1
+        self.current_floor_index += 1
+
+        if self.cleared_count >= TARGET_CLEAR:
+            self.is_game_cleared = True
+            # print("おめでとうございます！すべてのフロアをクリアしました！")
+        else:
+            print(f"フロアクリア！ 残り {TARGET_CLEAR - self.cleared_count} 層です。")
+    
+    def check_game_over(self) -> bool:
+        """ ゲームオーバー判定 """
+        if self.player.hp <= 0:
+            self.is_game_over = True
+            print("あなたは力尽きました。ゲームオーバーです。")
+            return True
+        return False
+
+    def check_game_cleared(self) -> bool:
+        """ ゲームクリア判定 """
+        if self.is_game_cleared:
+            # print("おめでとうございます！すべてのフロアをクリアしました！")
+            return True
+        return False
+
+
+    # ===== 入出力 =====
+    def read_command(self) -> str:
+        """ プレイヤーからのコマンド入力を受け取る """
+        while True:
+            command = input("(w/a/s/d 移動, u:ポーション, q:終了) > ").strip().lower()
+            if command in ['w', 'a', 's', 'd', 'u', 'q']:
+                return command
+            # print("不正ななコマンドです。{w, a, s, d, u, q} のいずれかを入力してください。")
+
+    # ===== ゲーム状態更新 ======
+    def step_turn(self, command = "") -> None:
+        """ 1ターン（プレイヤー入力 -> セルイベント -> 敵行動 -> 判定） """
+        self.floor.print_grid(self.player)
+        print()
+        self.player.print_status()
+        print()
+
+        command = self.read_command()  # コマンド入力
+
+        if command == 'q':
+            print("ゲーム終了します。")
+            self.is_game_over = True
+            return
+
+        elif command == 'u':
+            potion_id = input("使用するポーションのIDを入力してください: ").strip()
+            self.player.use_potion(potion_id)
+            return
+        
+        new_position = try_move_player(self.player, command, self.floor.grid)
+        if new_position is not None:
+            self.player.position = new_position
+        else:
+            print("その方向には移動できません！")
+            return
+        
+        # セルに入った際のイベント処理
+        self.floor.enter_cell(self.player)
+
+        # ゴール判定
+        is_goal, goal_message = self.floor.check_goal(self.player)
+        if is_goal:
+            print("ゴールに到達しました！フロアクリア！")
+            # print(goal_message)
+            self.next_floor()  # フロアクリア処理
+            if not self.is_game_cleared:
+                self.floor = self.start_floor()
+                self.player.position = self.floor.start
+            return
+        else:
+            if goal_message:
+                print(goal_message)
+
+        self.check_game_over()
+        self.check_game_cleared()
+    
+
+# ==================== 便利関数群 ====================
+
+#ファイル読み、文字出力
+def print_game_text(file_path):
+    with open(file_path, 'r', encoding='utf-8') as f:
+        text = f.read()
+    print(text)
+
+
+# プレイヤーからのコマンド入力を受け取る
+def read_player_command() -> str:
+    while True:
+        command = input("(w/a/s/d 移動, u:ポーション, q:終了) > ").strip().lower()
+        if command in ['w', 'a', 's', 'd', 'u', 'q']:
+            return command
+        print("不正ななコマンドです。{w, a, s, d, u, q} のいずれかを入力してください。")
+        # print("Invalid command! Please enter w, a, s, d, u, or q.")
+
+
+# 移動可能か判定し、可能なら移動先の座標を返す
+def try_move_player(player: Player, direction: str, grid: list[list[str]]) -> tuple[int, int]:
+    n, m = len(grid), len(grid[0])
+    delta_row, delta_col = DIRECTIONS[direction]
+    new_row = player.position[0] + delta_row
+    new_col = player.position[1] + delta_col
+
+    # 範囲内チェック
+    if not(0 <= new_row < n and 0 <= new_col < m):
+        # print("Out of bounds!")
+        return None
+
+    # 壁チェック
+    if grid[new_row][new_col] != '.':
+        # print("Hit a wall!")
+        return None
+
+    return (new_row, new_col)
