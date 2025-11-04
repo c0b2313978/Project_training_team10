@@ -2,6 +2,10 @@
 
 本プロジェクトは **grid（地形）をテキスト**, **オブジェクト/ギミック等は JSON** に分離した構成です。  
 
+## Progress Tracking
+
+See [TODO.md](TODO.md) for the current checklist.
+
 ---
 
 ## ディレクトリ構成（例）
