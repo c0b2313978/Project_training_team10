@@ -6,14 +6,42 @@ from modules.objects import Door, Chest, Teleport, Gimmicks
 from modules.monsters import Monster
 from modules.read_map_data import read_map_data
 
-# マップを表示する際のシンボル定義
+# マップを表示する際のシンボル定義 半角
 ENTITY_SYMBOLS = {
-    "item": {"weapon": "W", "potion": "P", "key": "K", "trap": "!"},
+    "player": "@",
+    "goal": "G",
+    "path": " ",
+    "wall": "■",
+    "weapon": "W",
+    "potion": "P",
+    "key": "K",
+    "trap": "!",
     "monster": "M",
-    "door": lambda door: "/" if door.opened else "D",
-    "chest": lambda chest: "C" if not chest.opened else "c",
-    "teleport": lambda tp: "T",
+    "opened_door": "/",
+    "closed_door": "D",
+    "closed_chest": "C",
+    "opened_chest": " ",
+    "teleport": "T",
     "hidden_item": "?",
+}
+
+# マップを表示する際のシンボル定義 全角
+ENTITY_SYMBOLS_FULL_WIDTH = {
+    "player": "🔴",
+    "goal": "🚩",
+    "path": "　",
+    "wall": "🔳",
+    "weapon": "武", 
+    "potion": "🧪",
+    "key": "🔑",
+    "trap": "💥",
+    "monster": "👾",
+    "opened_door": "／",
+    "closed_door": "Ｄ",
+    "closed_chest": "Ｃ",
+    "opened_chest": "　",
+    "teleport": "Ｔ",
+    "hidden_item": "❓",
 }
 
 class Floor:
@@ -163,61 +191,78 @@ class Floor:
 
     # ===== マップ上のシンボル収集 =====
     def _collect_entity_symbols(self) -> dict[tuple[int, int], str]:
-        symbols: dict[tuple[int, int], str]= {}
+        """ マップ上のアイテム・モンスター・ギミックのシンボルを収集し、位置とシンボルの辞書を返す """
+
+        symbols: dict[tuple[int, int], str]= {}  # 位置: シンボルのタイプ
         # items
         for item in self.items.values():
             if item.picked:  # 回収済みアイテム
                 continue
             if item.hidden and self.reveal_hidden:  # 未発見の隠しアイテム
-                symbols[item.pos] = ENTITY_SYMBOLS["hidden_item"]
+                symbols[item.pos] = "hidden_item"
             else:
-                # symbols[item.pos] = ENTITY_SYMBOLS["item"].get(item.type, "~")
-                symbols[tuple(item.pos)] = ENTITY_SYMBOLS["item"].get(item.type, "~")
-        
+                symbols[tuple(item.pos)] = item.type
+
         # monsters
         for monster in self.monsters.values():
             if monster.alive:
-                symbols[monster.pos] = ENTITY_SYMBOLS["monster"]
-        
+                symbols[monster.pos] = "monster"
+
         # doors
         for door in self.doors.values():
-            symbols[door.pos] = ENTITY_SYMBOLS["door"](door)
-        
+            symbols[door.pos] = "opened_door" if door.opened else "closed_door"
+
         # chests
         for chest in self.chests.values():
-            symbols[chest.pos] = ENTITY_SYMBOLS["chest"](chest)
-        
+            symbols[chest.pos] = "opened_chest" if chest.opened else "closed_chest"
+
         # teleports
         for tp in self.teleports.values():
-            symbols[tp.source] = ENTITY_SYMBOLS["teleport"](tp)
+            symbols[tp.source] = "teleport"
             if tp.bidirectional:
-                symbols[tp.target] = ENTITY_SYMBOLS["teleport"](tp)
+                symbols[tp.target] = "teleport"
         return symbols
 
     # ===== マップ表示 =====
-    def print_grid(self, player: 'Player' = None):
-        """マップ全体を表示する"""
+    def print_grid(self, player: 'Player' = None, output_file_object = None, full_width: bool = True) -> str:
+        """
+        マップ全体を表示する
+        引数:
+            player: プレイヤーオブジェクトを指定すると、プレイヤー位置を表示する
+            full_width: True なら全角シンボル、False なら半角シンボルで表示する
+            output_file_object: ファイルオブジェクトを指定すると、そこに出力する（デフォルトは標準出力）
+        返り値: 
+            出力したマップ文字列
+        """
         entity_symbols = self._collect_entity_symbols()
+        symbol_map = ENTITY_SYMBOLS_FULL_WIDTH if full_width else ENTITY_SYMBOLS
+        output = ""  # 出力用文字列
 
         for i in range(self.map_size[0]):
             row = []
             for j in range(self.map_size[1]):
                 pos = (i, j)
                 if player is not None and pos == player.position:  # プレイヤー位置
-                    row.append('@')
+                    symbol = symbol_map["player"]
                 # elif pos == self.start:  # スタート位置
-                #     row.append('S')  # TODO: もしかしたらいらないかも？
+                #     symbol = 'S'  # TODO: もしかしたらいらないかも？
                 elif pos in self.goal['pos']:  # ゴール位置
-                    row.append('G')
+                    symbol = symbol_map["goal"]
                 elif pos in entity_symbols:  # アイテム・モンスター・ギミック
-                    row.append(entity_symbols[pos])
+                    symbol = symbol_map[entity_symbols[pos]]
                 elif self.grid[i][j] == '.':  # 通路
-                    row.append(' ')
+                    symbol = symbol_map["path"]
                 else:
-                    row.append(self.grid[i][j])  # 壁
+                    symbol = symbol_map["wall"]  # 壁
+                
+                row.append(symbol)
 
-            print("".join(row))
-    
+            output += "".join(row) + "\n"
+
+        print(output, file=output_file_object)
+        return output
+
+
     # ==================== イベント処理 ====================
     # ===== 踏んだ瞬間の処理 を一括で行う =====
     def enter_cell(self, player: 'Player') -> None:
