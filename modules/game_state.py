@@ -43,7 +43,7 @@ class GameState:
         floor = Floor(map_file_path, floor_id=floor_id)  # フロアインスタンス生成
         return floor
 
-    def next_floor(self):
+    def next_floor(self) -> None:
         """ フロアクリア後に呼ぶ。{TARGET_CLEAR}回クリアでゲームクリア """
         self.cleared_count += 1
         self.current_floor_index += 1
@@ -87,7 +87,8 @@ class GameState:
         self.player.print_status()
         print()
 
-        command = self.read_command()  # コマンド入力
+        if not command and command in ['w', 'a', 's', 'd', 'u', 'q']:
+            command = self.read_command()  # コマンド入力
 
         if command == 'q':
             print("ゲーム終了します。")
@@ -162,7 +163,8 @@ def read_player_command() -> str:
 
 
 # 移動可能か判定し、可能なら移動先の座標を返す
-def try_move_player(player: Player, direction: str, grid: list[list[str]]) -> tuple[int, int]:
+def try_move_player(player: Player, direction: str, grid: list[list[str]]) -> tuple[int, int] | None:
+    """ プレイヤーを direction に移動させる。移動可能なら新しい座標を、不可なら None を返す """
     n, m = len(grid), len(grid[0])
     delta_row, delta_col = DIRECTIONS[direction]
     new_row = player.position[0] + delta_row

@@ -3,6 +3,7 @@ import json
 from pprint import pprint
 from modules.items import Item
 from modules.objects import Door, Chest, Teleport, Gimmicks
+from modules.player import Player
 from modules.monsters import Monster
 from modules.read_map_data import read_map_data
 
@@ -358,3 +359,11 @@ class Floor:
         else:
             return False, "ゴール条件を満たしていません。"
 
+
+# Floor 実験用コード
+# python -m modules.floor
+if __name__ == "__main__":
+    map_file = "map_data/map02.txt"
+    floor = Floor(map_file, floor_id="1")
+    floor.print_info()
+    floor.print_grid(full_width=True)
