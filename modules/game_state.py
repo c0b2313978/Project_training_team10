@@ -1,6 +1,7 @@
 from modules.floor import Floor
 from modules.player import Player
 from modules.constants import MAP_DIR_PATH, TARGET_CLEAR, TOTAL_FLOORS, DIRECTIONS
+import random
 
 class GameState:
     def __init__(self, requires_map_file_path: list[str] = []) -> None:
@@ -12,8 +13,8 @@ class GameState:
             TARGET_CLEAR = len(self.requires_map_file_path)  # デバッグ用：クリア必要フロア数
             self.all_floors = self.requires_map_file_path  # デバッグ用：特定フロア指定
         else:
-            # self.all_floors = random.sample(list(range(1, TOTAL_FLOORS + 1)), TARGET_CLEAR)  # クリア必要フロアリスト
-            self.all_floors = list(range(1, TOTAL_FLOORS + 1))  # デバッグ用：全フロアクリア
+            self.all_floors = random.sample(list(range(1, TOTAL_FLOORS + 1)), TARGET_CLEAR)  # クリア必要フロアリスト
+            # self.all_floors = list(range(1, TOTAL_FLOORS + 1))  # デバッグ用：全フロアクリア
             print(f"Selected Floors to Clear: {self.all_floors}")  # デバッグ用表示
 
         self.cleared_count = 0  # クリア済みフロア数
@@ -23,8 +24,11 @@ class GameState:
         self.is_game_cleared = False  # ゲームクリアフラグ
 
         self.floor: 'Floor' = self.start_floor()  # 現在のフロアインスタンス
+        print_all_opening()
         print("正常にフロアが開始されました。")  # デバッグ用表示
         self.player: 'Player' = Player(self.floor.start)  # プレイヤーインスタンス
+        print() #マップごとのルール説明
+        print(self.floor.rule)
 
     # ====== ゲーム進行管理 ======
     def game_state(self) -> bool:
@@ -87,7 +91,6 @@ class GameState:
         print()
         self.player.print_status()
         print()
-        print(self.floor.rule)
 
         if not command in ['w', 'a', 's', 'd', 'u', 'q']:
             command = self.read_command()  # コマンド入力
@@ -104,6 +107,7 @@ class GameState:
         new_position = try_move_player(self.player, command, self.floor.grid)
         if new_position is not None:
             self.player.position = new_position
+            self.player.last_move_direction = command
         else:
             print("その方向には移動できません！")
             return
@@ -145,6 +149,8 @@ class GameState:
             if not self.is_game_cleared:
                 self.floor = self.start_floor()
                 self.player.position = self.floor.start
+                print() #マップごとのルール説明
+                print(self.floor.rule)
             return
         else:
             if goal_message:
@@ -162,6 +168,13 @@ def print_game_text(file_path):
         text = f.read()
     print(text)
 
+def print_all_opening():
+    arry = ["game_texts/Firstgame_ui.txt","game_texts/Opening.txt","game_texts/Basic_rule.txt","game_texts/Controls_guide.txt"]
+    for i in arry:
+        with open(i, 'r', encoding='utf-8') as f:
+            text = f.read()
+        print(text)
+        input("")
 
 # プレイヤーからのコマンド入力を受け取る
 def read_player_command() -> str:

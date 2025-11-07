@@ -14,6 +14,7 @@ class Player:
         self.keys: set[str] = set()  # 所持しているキーID集合
         self.potions: set[str] = set()  # 所持ポーションID集合
         
+        self.last_move_direction: str | None = None  # 最後に移動した方向 ('w', 'a', 's', 'd')
         # self.visited_cells = set()  # 訪問済みセル集合
     
     # ====== ステータス表示 ======

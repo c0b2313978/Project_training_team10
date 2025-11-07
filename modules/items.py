@@ -1,3 +1,6 @@
+from typing import TYPE_CHECKING
+if TYPE_CHECKING: 
+    from modules.player import Player
 
 # ==================== アイテムクラス群 ====================
 class Item:
@@ -63,6 +66,13 @@ class Trap(Item):
     def __repr__(self):
         return f"Trap(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
 
+class Dummy(Item):
+    def apply_effect(self, player: 'Player') -> None:
+        """ 何も効果を発揮しないアイテム """
+        pass
+
+    def __repr__(self):
+        return f"Dummy(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden})"
 
 # アイテムタイプとクラスのマッピング
 ITEM_CLASS_MAP = {
@@ -70,4 +80,5 @@ ITEM_CLASS_MAP = {
     "weapon": Weapon,
     "potion": Potion,
     "trap": Trap,
+    "Dummy": Dummy,
 }

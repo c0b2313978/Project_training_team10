@@ -16,27 +16,11 @@
         {"id": "gold", "type": "key", "pos": [4,5], "hidden": false, "params": {"key_id": "gold"}},
         {"id": "TR1", "type": "trap", "pos": [1,13], "hidden": false, "params": {"damage": 10, "once": 1}}
     ],
-
-    "monsters": [
-        {"id": "M1", "pos": [2,8],  "ai_type": "static", "move_every": 0},
-        {"id": "M2", "pos": [6,4],  "ai_type": "random", "ai_params": {"p": 0.5}, "move_every": 1},
-        {"id": "M3", "pos": [8,6],  "ai_type": "chase",  "ai_params": {"range": 6}, "move_every": 1},
-        {"id": "M4", "pos": [10,11], "ai_type": "patrol", "ai_params": {"path": [[10,11],[10,15],[8,15],[8,11]]}, "move_every": 2}
-    ],
-
-    "doors": [
-        {"id": "D_gold", "pos": [10,15], "requires_key": "gold", "opened": false}
-    ],
-
-    "teleports": [
-        {"id": "T1", "source": [7,12], "target": [3,2], "bidirectional": true},
-        {"id": "T2", "source": [1,5],  "target": [11,3], "bidirectional": true, "requires_key": "gold"}
-    ],
-
+    
     "gimmicks": {
-        "ice": [[1,2],[1,3],[1,4],[1,5],[2,6],[3,6],[6,3],[6,4],[6,5],[7,2],[8,6],[10,12],[10,14]],
-        "hp_drain": 1,
-        "monster_ice": true,
-        "trap_cells": [[3,1]]
-    }
+        "ice": {},
+        "terrain_damage": {}
+    },
+
+    "rule": "壁に当たるまで直進し続ける"
 }
