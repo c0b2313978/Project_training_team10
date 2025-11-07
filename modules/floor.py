@@ -1,6 +1,5 @@
 # ==================== フロアクラス ====================
 import json
-from pprint import pprint
 from modules.items import Item
 from modules.objects import Door, Chest, Teleport, Gimmicks
 from modules.player import Player
@@ -32,16 +31,16 @@ ENTITY_SYMBOLS_FULL_WIDTH = {
     "goal": "🚩",
     "path": "　",
     "wall": "🔳",
-    "weapon": "武", 
+    "weapon": "🗡️ ", 
     "potion": "🧪",
     "key": "🔑",
     "trap": "💥",
     "monster": "👾",
-    "opened_door": "／",
-    "closed_door": "Ｄ",
-    "closed_chest": "Ｃ",
+    "opened_door": "　",
+    "closed_door": "🚪",
+    "closed_chest": "🧰",
     "opened_chest": "　",
-    "teleport": "Ｔ",
+    "teleport": "🔯",
     "hidden_item": "❓",
 }
 
@@ -102,8 +101,13 @@ class Floor:
         self.teleports: dict[str, Teleport] = {}
         self._teleports_init()
 
-        # ===== ギミック =====
-        # TODO: ギミック初期化
+        # # ===== ギミック =====
+        # self.gimmick: Gimmicks = {}
+        # self._gimmicks_init()
+
+        # ===== ルール =====
+        self.rule = ""
+        self._rules_init()
 
     # ===== JSONデータ読み込み =====
     def _read_json_data(self, json_path: str) -> dict:
@@ -166,6 +170,14 @@ class Floor:
             teleport = Teleport(**teleport_data)
             self.teleports[teleport.id] = teleport
 
+    # # ===== ギミック情報初期化 =====
+    # def _gimmicks_init(self):
+    #     gimmicks_data = self.info.get('gimmicks', [])
+    #     self.gimmick = Gimmicks(grid=self.grid, params=gimmicks_data)
+
+    def _rules_init(self):
+        self.rule = self.info.get('rule', "")
+
     def print_info(self):
         """ フロア情報を表示する（デバッグ用） """
         print(f"Floor Name: {self.name}")
@@ -173,22 +185,22 @@ class Floor:
         print(f"Start Position: {self.start}")
 
         print("Goal Info:")
-        pprint(self.goal)
+        print(self.goal)
 
         print("Items:")
-        pprint(self.items)
+        print(self.items)
         
         print("Monsters:")
-        pprint(self.monsters)
+        print(self.monsters)
 
         print("Doors:")
-        pprint(self.doors)
+        print(self.doors)
 
         print("Chests:")
-        pprint(self.chests)
+        print(self.chests)
 
         print("Teleports:")
-        pprint(self.teleports)
+        print(self.teleports)
 
     # ===== マップ上のシンボル収集 =====
     def _collect_entity_symbols(self) -> dict[tuple[int, int], str]:
@@ -285,6 +297,15 @@ class Floor:
                 player.add_item(item)
                 item.picked = True
                 print(f"アイテム {item.id} ({item.type}) を取得しました。")
+        
+        # テレポート
+        for teleport in self.teleports.values():
+            new_pos = teleport.get_destination(player.position)
+            if new_pos is not None:
+                player.position = teleport.get_destination(player.position)
+                break
+        
+
 
     # # ===== モンスターとの遭遇判定 =====
     # def check_monster_encounter(self, player: 'Player') -> Monster | None:
@@ -306,13 +327,14 @@ class Floor:
             if monster.hp <= 0:
                 monster.alive = False
                 print(f"モンスター {monster.id} を倒しました！")
+                
                 # ドロップアイテム処理
-                for drop_id in monster.drop_list:
-                    drop_item = self.items.get(drop_id)
-                    if drop_item and not drop_item.picked:
-                        player.add_item(drop_item)
-                        drop_item.picked = True
-                        print(f"モンスターがアイテム {drop_item.id} ({drop_item.type}) をドロップしました。取得しました！")
+                for drop_item in monster.drop_list:
+                    item = Item.create_item(**drop_item)  # Itemオブジェクト生成
+                    if item.type == 'trap' or item.type == 'weapon':  # 即時効果適用アイテム
+                        item.apply_effect(player)
+                    else:
+                        player.add_item(Item.create_item(**drop_item))  # 鍵, ポーションはインベントリに追加
                 break
 
             # モンスターの攻撃
@@ -333,6 +355,10 @@ class Floor:
 
     # ===== ゴール判定 =====
     def check_goal(self, player: Player) -> tuple[bool, str]:
+        """ ゴール条件を満たしているか判定する
+        返り値:
+            (is_goal: bool, goal_message: str)
+        """
         goal_message = "ゴール条件を満たしました！"
 
         # reach | keys_only | reach_and_keys
@@ -363,7 +389,8 @@ class Floor:
 # Floor 実験用コード
 # python -m modules.floor
 if __name__ == "__main__":
-    map_file = "map_data/map02.txt"
+    map_file = "map_data/map03.txt"
+    # map_file = "map_data/sample01.txt"
     floor = Floor(map_file, floor_id="1")
     floor.print_info()
     floor.print_grid(full_width=True)

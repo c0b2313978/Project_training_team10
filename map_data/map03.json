@@ -1,0 +1,27 @@
+{
+    "name": "map03",
+    "reveal_hidden": true,
+    "start": [1, 13],
+    "goal": {
+        "type": "reach_and_keys",
+        "pos": [9, 1],
+        "keys": ["key01"]
+    },
+    "items": [
+        {"id": "weapon", "type": "weapon", "pos": [7, 12], "hidden": false, "params": {"atk": 5}},
+        {"id": "trap01", "type": "trap", "pos": [3, 7], "hidden": false, "params": {"damage": 10, "once": 1}},
+        {"id": "trap02", "type": "trap", "pos": [8, 3], "hidden": false, "params": {"damage": 10, "once": 1}},
+        {"id": "potion", "type": "potion", "pos": [9, 7], "hidden": false}
+    ],
+    "monsters": [
+        {"id": "monster01", "pos": [3, 11],  "ai_type": "static", "move_every": 0,"strength": "weak"},
+        {"id": "monster02", "pos": [5, 11],  "ai_type": "static", "move_every": 0,"strength": "weak"},
+        {"id": "monster03", "pos": [7, 11],  "ai_type": "static", "move_every": 0,"strength": "weak"},
+        {"id": "monster04", "pos": [7, 4],  "ai_type": "static", "move_every": 0},
+        {"id": "monster05", "pos": [3, 2],  "ai_type": "static", "move_every": 0},
+        {"id": "monster06", "pos": [5, 7],  "ai_type": "static", "move_every": 0,"strength": "strong", "drop_list": [
+            {"id": "key01", "type": "key"}
+        ]}
+    ],
+    "rule": "モンスターは動かない。\nモンスターのどれかが鍵を持っている"
+}

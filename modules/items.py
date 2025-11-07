@@ -1,6 +1,8 @@
+from modules.player import Player
+
 # ==================== アイテムクラス群 ====================
 class Item:
-    def __init__(self, id, type, pos, hidden=False, params=None):
+    def __init__(self, id, type, pos = (-1, -1), hidden=False, params=None):
         self.id = id                # 一意なID
         self.type = type            # 'weapon'|'potion'|'key'|'trap'
         self.pos = tuple(pos)              # (row, col)
@@ -16,10 +18,11 @@ class Item:
         pass
 
     @classmethod
-    def create_item(cls, id, type, pos, hidden=False, params=None) -> 'Item':
+    def create_item(cls, id, type, pos = (-1, -1), hidden=False, params=None) -> 'Item':
         """ アイテムタイプに応じたインスタンスを生成するファクトリメソッド """
         item_class = ITEM_CLASS_MAP.get(type, Item)
         return item_class(id, type, pos, hidden, params)
+
 
 class Key(Item):
     def apply_effect(self, player: 'Player') -> None:
@@ -29,15 +32,17 @@ class Key(Item):
     def __repr__(self):
         return f"Key(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
 
+
 class Weapon(Item):
     DEFAULT_ATTACK = 10
     def apply_effect(self, player: 'Player') -> None:
         """ プレイヤーに装備効果を適用する """
-        player.attack += self.params.get('attack_bonus', self.DEFAULT_ATTACK)  # 攻撃力ボーナス（仮）
-        print(f"武器を装備しました！ 攻撃力が {self.params.get('attack_bonus', self.DEFAULT_ATTACK)} 上昇しました。")
+        player.attack += self.params.get('atk', self.DEFAULT_ATTACK)  # 攻撃力ボーナス（仮）
+        print(f"武器を装備しました！ 攻撃力が {self.params.get('atk', self.DEFAULT_ATTACK)} 上昇しました。")
 
     def __repr__(self):
         return f"Weapon(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
+
 
 class Potion(Item):
     def apply_effect(self, player: 'Player') -> None:
@@ -46,6 +51,7 @@ class Potion(Item):
 
     def __repr__(self):
         return f"Potion(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
+
 
 class Trap(Item):
     DEFAULT_DAMAGE = 10
@@ -57,6 +63,7 @@ class Trap(Item):
 
     def __repr__(self):
         return f"Trap(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
+
 
 # アイテムタイプとクラスのマッピング
 ITEM_CLASS_MAP = {

@@ -36,7 +36,7 @@ class Player:
             if self.keys:  # キーid一覧を表示
                 print(f"\tKeys: {self.keys}")
 
-    def add_item(self, item: Item) -> None:  # TODO: アイテムの種類によって保存場所変えるかも
+    def add_item(self, item: Item) -> None:
         """ アイテムをインベントリに追加する """
         self.inventory[item.id] = item
 
@@ -45,6 +45,13 @@ class Player:
 
         elif item.type == 'key':  # キー獲得時にキー集合に追加
             self.keys.add(item.id)
+
+    def floor_clear_keys_reset(self) -> None:
+        """ フロアクリア時に鍵だけリセットする """
+        self.keys.clear()
+        key_ids = [key_id for key_id in self.inventory if self.inventory[key_id].type == 'key']
+        for key_id in key_ids:
+            del self.inventory[key_id]
     
     def use_potion(self) -> bool:
         """ ポーションを使用する """

@@ -4,7 +4,7 @@ import random
 from modules.constants import DIRECTIONS
 
 class Monster:
-    def __init__(self, id, pos, ai_type, ai_params = {}, move_every=1, drop_list=[]):
+    def __init__(self, id, pos, ai_type, ai_params = {}, move_every=1, drop_list=[], strength: str = 'normal'):
         self.id = id  # 一意なID
         self.pos = tuple(pos)  # (row, col)
         self.next_pos = self.pos  # 次のターンの位置
@@ -15,6 +15,12 @@ class Monster:
         self.move_every = move_every  # 何ターンごとに移動するか（0=動かない）
         self.turn_counter = 0  # ターンカウンター
         self.drop_list = drop_list  # 撃破時ドロップアイテムIDリスト
+        self.strength = strength  # 'weak'|'normal'|'strong'
+        self.strength_param = {
+            'weak': (0.1, 0.3),
+            'normal': (0.4, 0.6),
+            'strong': (0.7, 1.0)
+        }
         
         # ステータスはフロア侵入時に自動で設定（要件）
         self.alive = True  # 生存フラグ
@@ -28,10 +34,11 @@ class Monster:
     def __repr__(self):
         return f"Monster(id={self.id}, pos={self.pos}, ai_type={self.ai_type}, ai_params={self.ai_params}, move_every={self.move_every}, drop_list={self.drop_list})"
     
-    def init_status(self, player_hp: int = 50, player_attack: int = 10):
+    def init_status(self, player_hp: int = 100, player_attack: int = 10):
         """ プレイヤーステータスに基づき、モンスターのステータスを初期化する """  # TODO: ステータス設定 要調整
-        self.hp = player_hp
-        self.attack = player_attack
+        multiplier = random.uniform(*self.strength_param[self.strength])
+        self.hp = int(player_hp*multiplier)
+        self.attack = int(player_attack*multiplier)
 
         # ai_params
         if self.ai_type == 'patrol':
@@ -51,7 +58,7 @@ class Monster:
         self.turn_counter = 0
     
     # ===== モンスター行動 =====
-    def monster_next_move(self, player_pos: tuple[int, int], grid: list[list[str]]) -> tuple[int, int]:
+    def monster_next_move(self, player_pos: tuple[int, int], grid: list[list[str]], occupied_positions:set=None) -> tuple[int, int]:
         """ モンスターのAIによる移動先決定ロジック """
         # static: 動かない
         if self.ai_type == 'static':
@@ -98,7 +105,7 @@ class Monster:
             
         return self.pos  # デフォルト：移動しない
     
-    def bfs(self, start: tuple[int, int], goal: tuple[int, int], grid: list[list[str]]) -> list[tuple[int, int]]:
+    def bfs(self, start: tuple[int, int], goal: tuple[int, int], grid: list[list[str]], occupied_positions:set=None) -> list[tuple[int, int]]:
         """ 幅優先探索で最短経路を見つける """
         from collections import deque
 
@@ -124,7 +131,9 @@ class Monster:
                     continue  # 通路でない
                 if new_pos in visited:
                     continue  # 訪問済み
-
+                if occupied_positions and (new_pos in occupied_positions and new_pos != goal):
+                    continue
+                
                 visited.add(new_pos)
                 prev[new_pos] = current
                 queue.append(new_pos)
