@@ -1,7 +1,5 @@
 # Team 10
-import json
-import random
-import time
+import os
 
 from modules.game_state import GameState
 from modules.constants import TEXT_DIR_PATH, sample_map_data
@@ -17,9 +15,9 @@ from modules.constants import TEXT_DIR_PATH, sample_map_data
 
 def tmp():
     game_state = GameState(requires_map_file_path=["map_data/sample01.txt", "map_data/sample06.txt"])  # デバッグ用：特定フロア指定
-    # game_state = GameState(requires_map_file_path=sample_map_data)  # デバッグ用：特定フロア指定
     while game_state.game_state():
         # command = game_state.read_command()
+        # os.system('cls' if os.name == 'nt' else 'clear')  # 画面クリア
         game_state.step_turn()
 
 

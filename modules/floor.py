@@ -225,7 +225,7 @@ class Floor:
         return symbols
 
     # ===== マップ表示 =====
-    def print_grid(self, player: 'Player' = None, output_file_object = None, full_width: bool = True) -> str:
+    def print_grid(self, player: Player = None, output_file_object = None, full_width: bool = True) -> str:
         """
         マップ全体を表示する
         引数:
@@ -266,7 +266,7 @@ class Floor:
 
     # ==================== イベント処理 ====================
     # ===== 踏んだ瞬間の処理 を一括で行う =====
-    def enter_cell(self, player: 'Player') -> None:
+    def enter_cell(self, player: Player) -> None:
         """ プレイヤーがセルに入った際のイベント処理 """
         # アイテム取得・罠発動
         for item in self.items.values():
@@ -295,7 +295,7 @@ class Floor:
     #     return None
     
     # ===== モンスターとの戦闘処理 =====
-    def battle_monster(self, player: 'Player', monster: Monster) -> None:
+    def battle_monster(self, player: Player, monster: Monster) -> None:
         """ プレイヤーとモンスターの戦闘処理 """
         # print(f"モンスター {monster.id} と遭遇しました！ 戦闘開始！")
 
@@ -332,7 +332,7 @@ class Floor:
     #     return drop_items
 
     # ===== ゴール判定 =====
-    def check_goal(self, player: 'Player') -> tuple[bool, str]:
+    def check_goal(self, player: Player) -> tuple[bool, str]:
         goal_message = "ゴール条件を満たしました！"
 
         # reach | keys_only | reach_and_keys

@@ -87,7 +87,7 @@ class GameState:
         self.player.print_status()
         print()
 
-        if not command and command in ['w', 'a', 's', 'd', 'u', 'q']:
+        if not command in ['w', 'a', 's', 'd', 'u', 'q']:
             command = self.read_command()  # コマンド入力
 
         if command == 'q':
