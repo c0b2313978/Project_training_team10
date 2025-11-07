@@ -43,10 +43,11 @@ class GameState:
         floor = Floor(map_file_path, floor_id=floor_id)  # フロアインスタンス生成
         return floor
 
-    def next_floor(self) -> None:
+    def next_floor(self, player: Player) -> None:
         """ フロアクリア後に呼ぶ。{TARGET_CLEAR}回クリアでゲームクリア """
         self.cleared_count += 1
         self.current_floor_index += 1
+        player.floor_clear_keys_reset() # 鍵リセット
 
         if self.cleared_count >= TARGET_CLEAR:
             self.is_game_cleared = True
@@ -81,6 +82,7 @@ class GameState:
 
     # ===== ゲーム状態更新 ======
     def step_turn(self, command = "") -> None:
+
         """ 1ターン（プレイヤー入力 -> セルイベント -> 敵行動 -> 判定） """
         self.floor.print_grid(self.player)
         print()
@@ -110,12 +112,22 @@ class GameState:
         self.floor.enter_cell(self.player)
 
         # モンスター行動
+        occupied = {m.pos for m in self.floor.monsters.values() if m.alive}
         for monster in self.floor.monsters.values():
             if not monster.alive:
                 continue
             if monster.increment_turn():  # move_every に達したら移動
-                monster.pos = monster.monster_next_move(self.player.position, self.floor.grid)
-        
+                # monster.pos
+                new_pos = monster.monster_next_move(self.player.position, self.floor.grid, occupied_positions=occupied)
+                if new_pos in occupied:
+                    continue  # 移動先が他のモンスターと被る場合は移動しない
+                occupied.remove(monster.pos)
+                occupied.add(new_pos)
+                monster.pos = new_pos
+                
+                # occupied.remove(monster.pos)
+                # occupied.add(monster.pos)
+
         # モンスターとの衝突判定
         for monster in self.floor.monsters.values():
             if not monster.alive:
@@ -129,7 +141,7 @@ class GameState:
         if is_goal:
             print("ゴールに到達しました！フロアクリア！")
             # print(goal_message)
-            self.next_floor()  # フロアクリア処理
+            self.next_floor(self.player)  # フロアクリア処理
             if not self.is_game_cleared:
                 self.floor = self.start_floor()
                 self.player.position = self.floor.start

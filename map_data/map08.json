@@ -1,0 +1,28 @@
+{
+    "name": "map08",
+    "reveal_hidden": true,
+    "start": [1, 1],
+    "goal": {
+        "type": "reach_and_keys",
+        "pos": [5, 7],
+        "keys": ["key01"]
+    },
+    "items": [
+        {"id": "key01", "type": "key", "pos": [7, 9], "hidden": true, "params": {"key_id": "01"}},
+        {"id": "trap01", "type": "trap", "pos": [4, 10], "hidden": true, "params": {"damage": 10, "once": 1}},
+        {"id": "trap02", "type": "trap", "pos": [6, 4], "hidden": true, "params": {"damage": 10, "once": 1}},
+        {"id": "trap03", "type": "trap", "pos": [7, 13], "hidden": true, "params": {"damage": 10, "once": 1}},
+        {"id": "trap04", "type": "trap", "pos": [4, 3], "hidden": true, "params": {"damage": 10, "once": 1}},
+        {"id": "trap05", "type": "trap", "pos": [8, 10], "hidden": true, "params": {"damage": 10, "once": 1}},
+        {"id": "trap06", "type": "trap", "pos": [3, 7], "hidden": true, "params": {"damage": 10, "once": 1}},
+        {"id": "trap07", "type": "trap", "pos": [5, 1], "hidden": true, "params": {"damage": 10, "once": 1}},
+        {"id": "potion01", "type": "potion", "pos": [6, 11], "hidden": true},
+        {"id": "weapon01", "type": "weapon", "pos": [7, 3], "hidden": true, "params": {"atk": 5}},
+        {"id": "weapon02", "type": "weapon", "pos": [2, 13], "hidden": true, "params": {"atk": 5}}
+    ],
+    "teleports": [
+        {"id": "T1", "source": [3, 3], "target": [9,13], "bidirectional": true},
+        {"id": "T2", "source": [1, 13], "target": [9, 1], "bidirectional": true}
+    ],
+    "rule": "どこに何があるかわからない状態で鍵を探す\n気を付けて進もう"
+}

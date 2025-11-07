@@ -1,0 +1,30 @@
+{
+    "name": "map07",
+    "reveal_hidden": true,
+    "start": [5, 0],
+    "goal": {
+        "type": "reach_and_keys",
+        "pos": [5, 12],
+        "keys": ["key"]
+    },
+    "items": [
+        {"id": "key", "type": "key", "pos": [5, 11], "hidden": false},
+        {"id": "weapon", "type": "weapon", "pos": [3, 7], "hidden": false, "params": {"atk": 10}},
+        {"id": "trap01", "type": "trap", "pos": [3, 3], "hidden": false, "params": {"damage": 10, "once": 1}},
+        {"id": "trap02", "type": "trap", "pos": [3, 4], "hidden": false, "params": {"damage": 10, "once": 1}}
+    ],
+    "monsters": [
+        {"id": "monster_01", "pos": [5, 2],  "ai_type": "static", "drop_list": []},
+        {"id": "monster_02", "pos": [5, 7],  "ai_type": "static", "drop_list": []},
+        {"id": "monster_03", "pos": [5, 8],  "ai_type": "static", "drop_list": []},
+        {"id": "monster_04", "pos": [7, 2],  "ai_type": "static", "drop_list": []}
+    ],
+    "doors": [],
+    "chests": [],
+    "teleports": [
+        {"id": "teleport01", "source": [7, 4], "target": [1, 9], "bidirectional": true}
+    ],
+    "gimmicks": [],
+    "rule": "レバーを引かないと開かないドアがある。\nモンスターは動かないが、仕掛けに注意。\n"
+}
+

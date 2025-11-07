@@ -1,0 +1,31 @@
+{
+    "name": "map04",
+    "reveal_hidden": true,
+    "start": [4, 0],
+    "goal": {
+        "type": "reach_and_keys",
+        "pos": [4, 12],
+        "keys": ["key"]
+    },
+    "items": [
+        {"id": "key", "type": "key", "pos": [4, 11], "hidden": true},
+        {"id": "weapon", "type": "weapon", "pos": [4, 6], "hidden": true, "params": {"atk": 10}},
+        {"id": "potion", "type": "potion", "pos": [1, 6], "hidden": true},
+        {"id": "trap01", "type": "trap", "pos": [1, 1], "hidden": true, "params": {"damage": 10, "once": 1}},
+        {"id": "trap02", "type": "trap", "pos": [1, 11], "hidden": true, "params": {"damage": 10, "once": 1}},
+        {"id": "trap03", "type": "trap", "pos": [7, 1], "hidden": true, "params": {"damage": 10, "once": 1}},
+        {"id": "trap04", "type": "trap", "pos": [7, 11], "hidden": true, "params": {"damage": 10, "once": 1}}
+    ],
+    "monsters": [
+        {"id": "monster_01", "pos": [4, 5],  "ai_type": "chase", "ai_params": {"range": 6}, "move_every": 1, "drop_list": [], "strength": "strong"},
+        {"id": "monster_02", "pos": [4, 7],  "ai_type": "chase", "ai_params": {"range": 6}, "move_every": 1, "drop_list": [], "strength": "weak"},
+        {"id": "monster_03", "pos": [3, 6],  "ai_type": "chase", "ai_params": {"range": 6}, "move_every": 2, "drop_list": []},
+        {"id": "monster_04", "pos": [5, 6],  "ai_type": "chase", "ai_params": {"range": 6}, "move_every": 2, "drop_list": []}
+    ],
+    "doors": [],
+    "chests": [],
+    "teleports": [],
+    "gimmicks": [],
+    "rule": "モンスターはあなたを追いかけてくる!\n鍵はモンスターが持っている。\n油断すると逃げ場を失うぞ。\n"
+}
+

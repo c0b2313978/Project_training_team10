@@ -14,7 +14,14 @@
         {"id": "potion01", "type": "potion", "pos": [3, 10], "hidden": false}
     ],
     "monsters": [
-        {"id": "monster01", "pos": [5, 7],  "ai_type": "static", "move_every": 0}
+        {"id": "monster01", "pos": [5, 7],  "ai_type": "static", "move_every": 0, "drop_list": [
+            {"id": "potion02", "type": "potion"},
+            {"id": "weapon02", "type": "weapon", "params": {"atk": 1000}},
+            {"id": "key02", "type": "key"}
+        ] }
+    ],
+    "teleports": [
+        {"id": "teleport01", "source": [3, 2], "target": [7, 1], "bidirectional": true}
     ],
     "rule": "モンスターは動かない。\nしかし、アイテムをどこかに隠している。"
 }
