@@ -82,12 +82,12 @@ class GameState:
 
     # ===== ゲーム状態更新 ======
     def step_turn(self, command = "") -> None:
-
         """ 1ターン（プレイヤー入力 -> セルイベント -> 敵行動 -> 判定） """
         self.floor.print_grid(self.player)
         print()
         self.player.print_status()
         print()
+        print(self.floor.rule)
 
         if not command in ['w', 'a', 's', 'd', 'u', 'q']:
             command = self.read_command()  # コマンド入力

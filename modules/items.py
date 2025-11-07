@@ -1,4 +1,3 @@
-from modules.player import Player
 
 # ==================== アイテムクラス群 ====================
 class Item:
