@@ -96,8 +96,7 @@ class GameState:
             return
 
         elif command == 'u':
-            potion_id = input("使用するポーションのIDを入力してください: ").strip()
-            self.player.use_potion(potion_id)
+            self.player.use_potion()  # ポーション使用
             return
         
         new_position = try_move_player(self.player, command, self.floor.grid)
