@@ -102,8 +102,8 @@ class Floor:
         self._teleports_init()
 
         # # ===== ギミック =====
-        # self.gimmick: Gimmicks = {}
-        # self._gimmicks_init()
+        self.gimmick: Gimmicks | None = None
+        self._gimmicks_init()
 
         # ===== ルール =====
         self.rule = ""
@@ -170,10 +170,14 @@ class Floor:
             teleport = Teleport(**teleport_data)
             self.teleports[teleport.id] = teleport
 
-    # # ===== ギミック情報初期化 =====
-    # def _gimmicks_init(self):
-    #     gimmicks_data = self.info.get('gimmicks', [])
-    #     self.gimmick = Gimmicks(grid=self.grid, params=gimmicks_data)
+    # ===== ギミック情報初期化 =====
+    def _gimmicks_init(self):
+        gimmicks_data = self.info.get('gimmicks')
+        if isinstance(gimmicks_data, dict) and gimmicks_data:
+            self.gimmicks = Gimmicks(grid=self.grid, moveable_cells=self.movable_cells, params=gimmicks_data)
+        else:
+            self.gimmicks = None
+
 
     def _rules_init(self):
         self.rule = self.info.get('rule', "")
@@ -277,26 +281,35 @@ class Floor:
 
 
     # ==================== イベント処理 ====================
-    # ===== 踏んだ瞬間の処理 を一括で行う =====
-    def enter_cell(self, player: Player) -> None:
-        """ プレイヤーがセルに入った際のイベント処理 """
-        # アイテム取得・罠発動
+    def _handle_cell_items(self, player: Player, cell_pos: tuple[int, int]) -> None:
         for item in self.items.values():
-            if (item.pos != player.position) or item.picked:
+            if item.picked or item.pos != cell_pos:
                 continue  # 位置が違うか、既に回収済み
 
             if item.hidden and not self.reveal_hidden:
                 continue  # 隠しアイテムは発見されない
 
-            # 罠・武器の即時効果適用
-            if item.type == 'trap' or item.type == 'weapon':
+            if item.type in ('trap', 'weapon'):  # 罠・武器の即時効果適用
                 item.apply_effect(player)
-                item.picked = True  # 罠・武器は回収済みにする
+                item.picked = True
             else:
-                # アイテム取得処理
                 player.add_item(item)
                 item.picked = True
                 print(f"アイテム {item.id} ({item.type}) を取得しました。")
+
+    # ===== 踏んだ瞬間の処理 を一括で行う =====
+    def enter_cell(self, player: Player) -> None:
+        """ プレイヤーがセルに入った際のイベント処理 """
+        traversed_positions = [player.position]
+        if self.gimmicks and self.gimmicks.is_ice_cell(player.position):
+            self.gimmicks.ice_gimmick_effect(player, on_visit=traversed_positions.append)  # 氷床ギミック処理
+
+        for pos in traversed_positions:  # 通過した全セルに対して処理
+            self._handle_cell_items(player, pos)
+            if self.gimmicks:  # ダメージ床
+                damage = self.gimmicks.apply_terrain_damage(player, pos)
+                if damage:
+                    print(f"足元のダメージ床で {damage} ダメージを受けた！ (残りHP: {player.hp})")
         
         # テレポート
         for teleport in self.teleports.values():
@@ -304,7 +317,6 @@ class Floor:
             if new_pos is not None:
                 player.position = teleport.get_destination(player.position)
                 break
-        
 
 
     # # ===== モンスターとの遭遇判定 =====
@@ -389,7 +401,7 @@ class Floor:
 # Floor 実験用コード
 # python -m modules.floor
 if __name__ == "__main__":
-    map_file = "map_data/map03.txt"
+    map_file = "map_data/map05.txt"
     # map_file = "map_data/sample01.txt"
     floor = Floor(map_file, floor_id="1")
     floor.print_info()

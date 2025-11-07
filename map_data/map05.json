@@ -1,6 +1,6 @@
 {
     "name": "map05",
-    "revel_hidden": true,
+    "reveal_hidden": true,
     "start": [8, 1],
     "goal": {
         "type": "reach_and_keys",
@@ -9,11 +9,11 @@
     },
     "items": [
         {"id": "key01", "type": "key", "pos": [1, 11], "hidden": false},
-        {"id": "weapon", "type": "weapon", "pos": [4, 7], "hidden": false, "params": {"atk": 10}},
-        {"id": "trap01", "type": "trap", "pos": [2, 8], "hidden": false, "params": {"damage": 10, "once": 1}},
-        {"id": "trap02", "type": "trap", "pos": [4, 5], "hidden": false, "params": {"damage": 10, "once": 1}},
-        {"id": "trap05", "type": "trap", "pos": [5, 11], "hidden": false, "params": {"damage": 10, "once":1}},
-        {"id": "potion05", "type": "potion", "pos": [7, 11], "hidden": false}
+        {"id": "weapon", "type": "weapon", "pos": [4, 7], "hidden": true, "params": {"atk": 10}},
+        {"id": "trap01", "type": "trap", "pos": [2, 8], "hidden": true, "params": {"damage": 10, "once": 1}},
+        {"id": "trap02", "type": "trap", "pos": [4, 5], "hidden": true, "params": {"damage": 10, "once": 1}},
+        {"id": "trap05", "type": "trap", "pos": [5, 11], "hidden": true, "params": {"damage": 10, "once":1}},
+        {"id": "potion05", "type": "potion", "pos": [7, 11], "hidden": true}
     ],
     "monsters":[
         {"id": "monster01", "pos": [4, 2], "ai_type": "static", "move_every": 0},
