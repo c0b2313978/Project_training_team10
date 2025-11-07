@@ -12,7 +12,7 @@ class Player:
 
         self.inventory: dict[str, Item] = {}  # id -> Item
         self.keys: set[str] = set()  # 所持しているキーID集合
-        self.potions: dict[str, Item] = {}  # 所持ポーション
+        self.potions: set[str] = set()  # 所持ポーションID集合
         
         # self.visited_cells = set()  # 訪問済みセル集合
     
@@ -36,8 +36,11 @@ class Player:
         """ アイテムをインベントリに追加する """
         self.inventory[item.id] = item
 
-        if item.type == 'potion':  # ポーション獲得時にストック数を増やす
-            self.potions[item.id] = item
+        if item.type == 'potion':  # ポーション獲得時にポーション集合に追加
+            self.potions.add(item.id)
+
+        elif item.type == 'key':  # キー獲得時にキー集合に追加
+            self.keys.add(item.id)
     
     def use_potion(self) -> bool:
         """ ポーションを使用する """
@@ -46,14 +49,14 @@ class Player:
             return False
         
         # インベントリからポーションを探す
-        potion = self.potions.popitem()[1]  # 1つ取得
+        potion_id = self.potions.pop()  # 1つ取得
 
         # ポーション効果適用
-        potion.apply_effect(self)
-        print(f"ポーション {potion.id} を使用しました。")
+        self.inventory[potion_id].apply_effect(self)
+        print(f"ポーション {potion_id} を使用しました。")
 
         # インベントリから削除
-        del self.inventory[potion.id]
+        del self.inventory[potion_id]
         return True
     
     def item_organizing(self) -> None:
