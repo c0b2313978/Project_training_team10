@@ -26,12 +26,16 @@ class Player:
     def print_inventory(self, debug: bool = False) -> None:
         """ インベントリを表示する """
         print("Inventory:")
-        if not self.inventory:
-            print("\t(空)")
-            return
-        for id, item in self.inventory.items():
-            print(f"\t{item}: {id}")
-    
+        if debug:
+            for id, item in self.inventory.items():
+                print(f"\t{item}: {id}")
+        else:
+            if self.potions:
+                print(f"\tPotions: {len(self.potions)}")
+            
+            if self.keys:  # キーid一覧を表示
+                print(f"\tKeys: {self.keys}")
+
     def add_item(self, item: Item) -> None:  # TODO: アイテムの種類によって保存場所変えるかも
         """ アイテムをインベントリに追加する """
         self.inventory[item.id] = item
