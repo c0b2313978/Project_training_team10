@@ -255,11 +255,20 @@ class Floor:
         symbol_map = ENTITY_SYMBOLS_FULL_WIDTH if full_width else ENTITY_SYMBOLS
         output = ""  # 出力用文字列
 
+        # 視野制限がある場合、見えるセルを取得
+        visible_cells = None
+        if self.gimmicks and player is not None:
+            visible_cells = self.gimmicks.get_visible_cells(player.position)
+
         for i in range(self.map_size[0]):
             row = []
             for j in range(self.map_size[1]):
                 pos = (i, j)
-                if player is not None and pos == player.position:  # プレイヤー位置
+                
+                # 視野制限がある場合、見えないセルは霧で隠す
+                if visible_cells is not None and pos not in visible_cells:
+                    symbol = "？" if full_width else "?"
+                elif player is not None and pos == player.position:  # プレイヤー位置
                     symbol = symbol_map["player"]
                 # elif pos == self.start:  # スタート位置
                 #     symbol = 'S'  # TODO: もしかしたらいらないかも？
