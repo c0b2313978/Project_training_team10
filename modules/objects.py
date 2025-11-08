@@ -81,6 +81,16 @@ class Gimmicks:
             self.terrain_damage_regions = set()
             self.terrain_damage = 0
 
+        # 視野制限ギミック
+        self.has_vision_limit = 'vision' in self.params
+        vision_config = self.params.get('vision', {})
+        if self.has_vision_limit:
+            self.vision_mode = vision_config.get('mode', 'range')  # 'range' or 'line_of_sight'
+            self.vision_range = vision_config.get('range', 3)  # k マス（デフォルト3）
+        else:
+            self.vision_mode = None
+            self.vision_range = None
+
     def _normalize_region_list(self, raw_regions) -> set[tuple[int, int]]:
         if raw_regions is None:
             return set()
@@ -138,6 +148,79 @@ class Gimmicks:
             return 0
         player.hp = max(player.hp - damage, 0)
         return damage
+
+    # ===== 視野制限ギミック =====
+    def get_visible_cells(self, player_pos: tuple[int, int]) -> set[tuple[int, int]] | None:
+        """
+        視野制限ギミックが有効な場合、プレイヤーから見える位置の集合を返す
+        視野制限がない場合は None を返す
+        """
+        if not self.has_vision_limit:
+            return None
+        
+        if self.vision_mode == 'range':
+            return self._get_visible_cells_range(player_pos)
+        elif self.vision_mode == 'line_of_sight':
+            return self._get_visible_cells_line_of_sight(player_pos)
+        else:
+            return None
+    
+    def _get_visible_cells_range(self, player_pos: tuple[int, int]) -> set[tuple[int, int]]:
+        """
+        周囲 k マスの範囲の地形が見える（マンハッタン距離またはチェビシェフ距離）
+        ここではチェビシェフ距離（8方向に均等）を使用
+        """
+        visible = set()
+        r, c = player_pos
+        k = self.vision_range
+        
+        for i in range(max(0, r - k), min(len(self.grid), r + k + 1)):
+            for j in range(max(0, c - k), min(len(self.grid[0]), c + k + 1)):
+                visible.add((i, j))
+        
+        return visible
+    
+    def _get_visible_cells_line_of_sight(self, player_pos: tuple[int, int]) -> set[tuple[int, int]]:
+        """
+        視線が壁にぶつかるまでの視野を計算する（レイキャスティング）
+        """
+        visible = {player_pos}
+        r, c = player_pos
+        
+        # 8方向 + 斜め方向にレイキャスティング
+        # より詳細な視野のために、複数の角度でレイを飛ばす
+        angles = []
+        for angle in range(0, 360, 5):  # 5度刻みでレイを飛ばす
+            import math
+            rad = math.radians(angle)
+            angles.append((math.cos(rad), math.sin(rad)))
+        
+        for dx, dy in angles:
+            # レイを飛ばす
+            t = 0.0
+            max_distance = max(len(self.grid), len(self.grid[0]))
+            
+            while t < max_distance:
+                t += 0.5  # ステップサイズ
+                x = r + dx * t
+                y = c + dy * t
+                
+                # グリッド座標に変換
+                grid_r = int(round(x))
+                grid_c = int(round(y))
+                
+                # 範囲外チェック
+                if not (0 <= grid_r < len(self.grid) and 0 <= grid_c < len(self.grid[0])):
+                    break
+                
+                # このセルを可視に追加
+                visible.add((grid_r, grid_c))
+                
+                # 壁に当たったら停止
+                if self.grid[grid_r][grid_c] == '#':
+                    break
+        
+        return visible
 
 
 

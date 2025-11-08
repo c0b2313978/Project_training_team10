@@ -1,0 +1,19 @@
+{
+    "name": "Vision Line-of-Sight Test",
+    "reveal_hidden": false,
+    "start": [4, 4],
+    "goal": {
+        "type": "reach",
+        "pos": [4, 12]
+    },
+    "items": [
+        {"id": "potion01", "type": "potion", "pos": [1, 8], "hidden": false}
+    ],
+    "monsters": [],
+    "gimmicks": {
+        "vision": {
+            "mode": "line_of_sight"
+        }
+    },
+    "rule": "視野制限テスト: 視線が壁にぶつかるまで見える"
+}

@@ -1,0 +1,20 @@
+{
+    "name": "Vision Range Test",
+    "reveal_hidden": false,
+    "start": [4, 4],
+    "goal": {
+        "type": "reach",
+        "pos": [4, 12]
+    },
+    "items": [
+        {"id": "potion01", "type": "potion", "pos": [2, 8], "hidden": false}
+    ],
+    "monsters": [],
+    "gimmicks": {
+        "vision": {
+            "mode": "range",
+            "range": 3
+        }
+    },
+    "rule": "視野制限テスト: 周囲3マスのみ見える"
+}
