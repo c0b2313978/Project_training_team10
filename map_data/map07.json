@@ -9,7 +9,6 @@
     },
     "items": [
         {"id": "key", "type": "key", "pos": [4, 11], "hidden": true},
-        {"id": "D_gold", "type": "key", "pos": [1, 7], "hidden": true},
         {"id": "weapon", "type": "weapon", "pos": [3, 7], "hidden": true, "params": {"atk": 5}},
         {"id": "trap01", "type": "trap", "pos": [3, 3], "hidden": true, "params": {"damage": 10, "once": 1}},
         {"id": "trap02", "type": "trap", "pos": [3, 4], "hidden": true, "params": {"damage": 10, "once": 1}},
@@ -22,12 +21,9 @@
         {"id": "monster_04", "pos": [7, 2],  "ai_type": "static", "drop_list": [], "strength": "strong"},
         {"id": "monster_05", "pos": [5, 11], "ai_type": "static", "drop_list": [], "strength": "strong"}
     ],
-    "doors": [{"id": "D_gold", "pos": [7,7], "requires_key": "gold", "opened": true}],
-    "chests": [],
     "teleports": [
         {"id": "teleport01", "source": [7, 4], "target": [1, 9], "bidirectional": true}
     ],
-    "gimmicks": [],
     "rule": "鍵がないと開かないドアがある。\nモンスターは動かないが、仕掛けに注意。\n"
 }
 
