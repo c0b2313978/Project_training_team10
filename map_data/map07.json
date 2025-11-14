@@ -12,7 +12,8 @@
         {"id": "D_gold", "type": "key", "pos": [1, 7], "hidden": true},
         {"id": "weapon", "type": "weapon", "pos": [3, 7], "hidden": true, "params": {"atk": 10}},
         {"id": "trap01", "type": "trap", "pos": [3, 3], "hidden": true, "params": {"damage": 10, "once": 1}},
-        {"id": "trap02", "type": "trap", "pos": [3, 4], "hidden": true, "params": {"damage": 10, "once": 1}}
+        {"id": "trap02", "type": "trap", "pos": [3, 4], "hidden": true, "params": {"damage": 10, "once": 1}},
+        {"id": "potion01", "type": "potion", "pos": [3, 8], "hidden": true}
     ],
     "monsters": [
         {"id": "monster_01", "pos": [5, 2],  "ai_type": "static", "drop_list": [], "strength": "strong"},
