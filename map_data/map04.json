@@ -8,7 +8,7 @@
         "keys": ["key"]
     },
     "items": [
-        {"id": "weapon", "type": "weapon", "pos": [4, 6], "hidden": true, "params": {"atk": 10}},
+        {"id": "weapon", "type": "weapon", "pos": [4, 6], "hidden": true, "params": {"atk": 5}},
         {"id": "potion", "type": "potion", "pos": [1, 6], "hidden": true},
         {"id": "trap01", "type": "trap", "pos": [1, 1], "hidden": true, "params": {"damage": 10, "once": 1}},
         {"id": "trap02", "type": "trap", "pos": [1, 11], "hidden": true, "params": {"damage": 10, "once": 1}},

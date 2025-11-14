@@ -9,7 +9,7 @@
     },
     "items": [
         {"id": "key", "type": "key", "pos": [1, 11], "hidden": true},
-        {"id": "weapon", "type": "weapon", "pos": [3, 3], "hidden": false, "params": {"atk": 10}},
+        {"id": "weapon", "type": "weapon", "pos": [3, 3], "hidden": false, "params": {"atk": 5}},
         {"id": "potion", "type": "potion", "pos": [8, 9], "hidden": false},
         {"id": "trap01", "type": "trap", "pos": [4, 5], "hidden": false, "params": {"damage": 10, "once": 1}},
         {"id": "trap02", "type": "trap", "pos": [2, 8], "hidden": false, "params": {"damage": 10, "once": 1}},
