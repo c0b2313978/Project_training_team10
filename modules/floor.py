@@ -401,7 +401,7 @@ class Floor:
 # Floor 実験用コード
 # python -m modules.floor
 if __name__ == "__main__":
-    map_file = "map_data/map05.txt"
+    map_file = "map_data/map07.txt"
     # map_file = "map_data/sample01.txt"
     floor = Floor(map_file, floor_id="1")
     floor.print_info()

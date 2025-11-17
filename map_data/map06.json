@@ -6,15 +6,14 @@
     "goal": {
         "type": "reach_and_keys",
         "multiple": true,
-        "pos": [[7, 14], [8, 14], [7, 15], [8, 15]],
+        "pos": [[7, 15], [8, 15]],
         "keys": ["gold"]
     },
 
     "items": [
         {"id": "W1", "type": "weapon", "pos": [1,2], "hidden": false, "params": {"atk": 5}},
         {"id": "P1", "type": "potion", "pos": [1,10], "hidden": true,  "params": {}},
-        {"id": "gold", "type": "key", "pos": [4,5], "hidden": false, "params": {"key_id": "gold"}},
-        {"id": "TR1", "type": "trap", "pos": [1,13], "hidden": false, "params": {"damage": 10, "once": 1}}
+        {"id": "gold", "type": "key", "pos": [4,5], "hidden": false, "params": {"key_id": "gold"}}
     ],
     
     "gimmicks": {
@@ -22,5 +21,5 @@
         "terrain_damage": {}
     },
 
-    "rule": "壁に当たるまで直進し続ける"
+    "rule": "壁に当たるまで直進し続ける。1マス進むごとに1ダメージを受ける。"
 }
