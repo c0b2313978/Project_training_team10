@@ -15,6 +15,8 @@ class GameState:
         else:
             self.all_floors = random.sample(list(range(1, TOTAL_FLOORS + 1)), TARGET_CLEAR)  # クリア必要フロアリスト
             # self.all_floors = list(range(1, TOTAL_FLOORS + 1))  # デバッグ用：全フロアクリア
+            self.all_floors.append(0)  #  強制的にmap00を追加
+            TARGET_CLEAR+=1
             print(f"Selected Floors to Clear: {self.all_floors}")  # デバッグ用表示
 
         self.cleared_count = 0  # クリア済みフロア数
@@ -70,6 +72,8 @@ class GameState:
     def check_game_cleared(self) -> bool:
         """ ゲームクリア判定 """
         if self.is_game_cleared:
+            print("\n\n\n")
+            print_game_text("game_texts/Ending.txt")
             # print("おめでとうございます！すべてのフロアをクリアしました！")
             return True
         return False
@@ -151,6 +155,8 @@ class GameState:
                 self.player.position = self.floor.start
                 print() #マップごとのルール説明
                 print(self.floor.rule)
+            else:
+                self.check_game_cleared()  #この関数が発生しないbugを直した
             return
         else:
             if goal_message:
