@@ -74,7 +74,7 @@ class GameState:
         if self.is_game_cleared:
             print("\n\n\n")
             print_game_text("game_texts/Ending.txt")
-            # print("おめでとうございます！すべてのフロアをクリアしました！")
+            print("Congratulations on clearing the game!")
             return True
         return False
 
