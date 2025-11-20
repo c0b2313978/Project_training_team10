@@ -83,8 +83,8 @@ class GameState:
     def read_command(self) -> str:
         """ プレイヤーからのコマンド入力を受け取る """
         while True:
-            command = input("(w/a/s/d 移動, u:ポーション, q:終了) > ").strip().lower()
-            if command in ['w', 'a', 's', 'd', 'u', 'q']:
+            command = input("(w/a/s/d 移動, u:ポーション, r:ルール表示, q:終了) > ").strip().lower()
+            if command in ['w', 'a', 's', 'd', 'u', 'q', 'r']:
                 return command
             # print("不正ななコマンドです。{w, a, s, d, u, q} のいずれかを入力してください。")
 
@@ -96,7 +96,7 @@ class GameState:
         self.player.print_status()
         print()
 
-        if not command in ['w', 'a', 's', 'd', 'u', 'q']:
+        if not command in ['w', 'a', 's', 'd', 'u', 'q', 'r']:
             command = self.read_command()  # コマンド入力
 
         if command == 'q':
@@ -106,6 +106,10 @@ class GameState:
 
         elif command == 'u':
             self.player.use_potion()  # ポーション使用
+            return
+        
+        elif command == 'r':
+            print(self.floor.rule)
             return
         
         new_position = try_move_player(self.player, command, self.floor.grid)
@@ -185,10 +189,10 @@ def print_all_opening():
 # プレイヤーからのコマンド入力を受け取る
 def read_player_command() -> str:
     while True:
-        command = input("(w/a/s/d 移動, u:ポーション, q:終了) > ").strip().lower()
-        if command in ['w', 'a', 's', 'd', 'u', 'q']:
+        command = input("(w/a/s/d 移動, u:ポーション, r:ルール表示, q:終了) > ").strip().lower()
+        if command in ['w', 'a', 's', 'd', 'u', 'q', 'r']:
             return command
-        print("不正ななコマンドです。{w, a, s, d, u, q} のいずれかを入力してください。")
+        print("不正ななコマンドです。{w, a, s, d, u, q, r} のいずれかを入力してください。")
         # print("Invalid command! Please enter w, a, s, d, u, or q.")
 
 
