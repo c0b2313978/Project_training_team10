@@ -273,198 +273,193 @@ flowchart TD
   quit --> endGame
 ```
 
-## クラス別メンバーと矢印対応 (mermaid)
-メソッドとインスタンス変数を個別ノード化し、主な作用先を矢印で表現しています。各クラスは色分けしています。
+## ????????????? (mermaid)
+?????????????????????????????Others > ???????????????????????????
 
+### GameState
 ```mermaid
 graph LR
-  %% GameState
-  subgraph GameState
-    GS_is["var is_game_state"]
-    GS_req["var requires_map_file_path"]
-    GS_floors["var all_floors"]
-    GS_clear["var cleared_count"]
-    GS_idx["var current_floor_index"]
-    GS_over["var is_game_over"]
-    GS_cleared["var is_game_cleared"]
-    GS_floor["var floor (Floor)"]
-    GS_player["var player (Player)"]
-    GS_init["method __init__"]
-    GS_game["method game_state"]
-    GS_start["method start_floor"]
-    GS_next["method next_floor"]
-    GS_chk_over["method check_game_over"]
-    GS_chk_clear["method check_game_cleared"]
-    GS_read["method read_command"]
-    GS_step["method step_turn"]
+  classDef gs fill:#fde4ec,stroke:#c2185b,color:#000;
+  classDef floor fill:#fff8e1,stroke:#ff6f00,color:#000;
+  classDef player fill:#e3f2fd,stroke:#1565c0,color:#000;
+  classDef monster fill:#ede7f6,stroke:#5e35b1,color:#000;
+  subgraph Main_GameState["GameState"]
+    direction LR
+    subgraph GS_V["Vars"]
+      direction TB
+      GS_req["requires_map_file_path"]:::gs
+      GS_floors["all_floors"]:::gs
+      GS_clear["cleared_count"]:::gs
+      GS_idx["current_floor_index"]:::gs
+      GS_is["is_game_state"]:::gs
+      GS_over["is_game_over"]:::gs
+      GS_cleared["is_game_cleared"]:::gs
+      GS_floor["floor (Floor)"]:::gs
+      GS_player["player (Player)"]:::gs
+    end
+    subgraph GS_M["Methods"]
+      direction TB
+      GS_init(["__init__"]):::gs
+      GS_game(["game_state"]):::gs
+      GS_start(["start_floor"]):::gs
+      GS_next(["next_floor"]):::gs
+      GS_chk_over(["check_game_over"]):::gs
+      GS_chk_clear(["check_game_cleared"]):::gs
+      GS_read(["read_command"]):::gs
+      GS_step(["step_turn"]):::gs
+    end
   end
-
-  %% Floor
-  subgraph Floor
-    FL_id["var floor_id"]
-    FL_grid["var grid"]
-    FL_json["var json_path"]
-    FL_map["var map_size"]
-    FL_move["var movable_cells"]
-    FL_info["var info"]
-    FL_name["var name"]
-    FL_reveal["var reveal_hidden"]
-    FL_start["var start"]
-    FL_goal_type["var goal.type"]
-    FL_goal_pos["var goal.pos"]
-    FL_goal_keys["var goal.keys"]
-    FL_items["var items dict"]
-    FL_monsters["var monsters dict"]
-    FL_doors["var doors dict"]
-    FL_chests["var chests dict"]
-    FL_tp["var teleports dict"]
-    FL_gimmicks["var gimmicks"]
-    FL_rule["var rule"]
-    FL_ctor["method __init__"]
-    FL_read["method _read_json_data"]
-    FL_goal_init["method _goal_init"]
-    FL_items_init["method _items_init"]
-    FL_mons_init["method _monsters_init"]
-    FL_doors_init["method _doors_init"]
-    FL_chests_init["method _chests_init"]
-    FL_tp_init["method _teleports_init"]
-    FL_gimmicks_init["method _gimmicks_init"]
-    FL_rule_init["method _rules_init"]
-    FL_print_info["method print_info"]
-    FL_collect["method _collect_entity_symbols"]
-    FL_print["method print_grid"]
-    FL_handle["method _handle_cell_items"]
-    FL_enter["method enter_cell"]
-    FL_battle["method battle_monster"]
-    FL_goal_chk["method check_goal"]
+  subgraph Others
+    direction TB
+    subgraph O_Player["Player"]
+      direction TB
+      PL_hp_ext["hp"]:::player
+      PL_pos_ext["position"]:::player
+      PL_status_ext(["print_status"]):::player
+      PL_use_ext(["use_potion"]):::player
+    end
+    subgraph O_Floor["Floor"]
+      direction TB
+      FL_print_ext(["print_grid"]):::floor
+      FL_enter_ext(["enter_cell"]):::floor
+      FL_battle_ext(["battle_monster"]):::floor
+      FL_goal_ext(["check_goal"]):::floor
+    end
+    subgraph O_Monster["Monster"]
+      direction TB
+      MON_incr_ext(["increment_turn"]):::monster
+      MON_move_ext(["monster_next_move"]):::monster
+    end
   end
-
-  %% Player
-  subgraph Player
-    PL_pos["var position"]
-    PL_hp["var hp"]
-    PL_attack["var attack"]
-    PL_eq_id["var equipped_weapon_id"]
-    PL_eq_atk["var equipped_weapon_attack"]
-    PL_inv["var inventory dict"]
-    PL_keys["var keys set"]
-    PL_pots["var potions set"]
-    PL_last["var last_move_direction"]
-    PL_print["method print_status"]
-    PL_inv_print["method print_inventory"]
-    PL_add["method add_item"]
-    PL_reset_keys["method floor_clear_keys_reset"]
-    PL_use["method use_potion"]
-    PL_recalc["method recalculate_attack"]
-    PL_equip["method equip_weapon"]
-    PL_org["method item_organizing"]
-  end
-
-  %% Monster
-  subgraph Monster
-    MON_id["var id"]
-    MON_pos["var pos"]
-    MON_next_pos["var next_pos"]
-    MON_ai["var ai_type"]
-    MON_ai_param["var ai_params"]
-    MON_move_every["var move_every"]
-    MON_turn["var turn_counter"]
-    MON_drop["var drop_list"]
-    MON_strength["var strength"]
-    MON_alive["var alive"]
-    MON_hp["var hp"]
-    MON_attack["var attack"]
-    MON_patrol_points["var patrol_points"]
-    MON_patrol_idx["var patrol_point"]
-    MON_debug["var debug_path"]
-    MON_ctor["method __init__"]
-    MON_status["method init_status"]
-    MON_incr["method increment_turn"]
-    MON_reset["method reset_turn_counter"]
-    MON_move["method monster_next_move"]
-    MON_bfs["method bfs"]
-  end
-
-  %% Items (generic + subclasses)
-  subgraph Items
-    IT_id["var id"]
-    IT_type["var type"]
-    IT_pos["var pos"]
-    IT_hidden["var hidden"]
-    IT_params["var params"]
-    IT_picked["var picked"]
-    IT_create["method create_item"]
-    IT_apply["method Item.apply_effect"]
-    KEY_apply["method Key.apply_effect"]
-    WPN_apply["method Weapon.apply_effect"]
-    POT_apply["method Potion.apply_effect"]
-    TRP_apply["method Trap.apply_effect"]
-    DMY_apply["method Dummy.apply_effect"]
-  end
-
-  %% Objects / Gimmicks
-  subgraph Objects
-    DR_id["var Door.id"]
-    DR_pos["var Door.pos"]
-    DR_req["var Door.requires_key"]
-    DR_open["var Door.opened"]
-    CH_id["var Chest.id"]
-    CH_pos["var Chest.pos"]
-    CH_req["var Chest.requires_key"]
-    CH_cont["var Chest.contents"]
-    CH_open["var Chest.opened"]
-    TP_id["var Teleport.id"]
-    TP_src["var Teleport.source"]
-    TP_tgt["var Teleport.target"]
-    TP_req["var Teleport.requires_key"]
-    TP_bi["var Teleport.bidirectional"]
-    GM_grid["var Gimmicks.grid"]
-    GM_cells["var Gimmicks.moveable_cells"]
-    GM_params["var Gimmicks.params"]
-    GM_ice["var ice_regions"]
-    GM_terrain["var terrain_damage_regions"]
-    GM_damage["var terrain_damage"]
-    CH_return["method Chest.return_contents"]
-    TP_dest["method Teleport.get_destination"]
-    GM_norm["method Gimmicks._normalize_region_list"]
-    GM_is["method is_gimmick_cell / is_ice_cell"]
-    GM_ice_eff["method ice_gimmick_effect"]
-    GM_terrain_val["method terrain_damage_value"]
-    GM_apply_damage["method apply_terrain_damage"]
-  end
-
-  %% Edge definitions (GameState)
   GS_init --> GS_req
   GS_init --> GS_floors
-  GS_init --> GS_floor
-  GS_init --> GS_player
   GS_init --> GS_clear
   GS_init --> GS_idx
   GS_init --> GS_is
+  GS_init --> GS_floor
+  GS_init --> GS_player
   GS_game --> GS_is
+  GS_game --> GS_over
+  GS_game --> GS_cleared
+  GS_start --> GS_floors
   GS_start --> GS_floor
-  GS_start --> FL_ctor
   GS_next --> GS_clear
   GS_next --> GS_idx
   GS_next --> GS_cleared
-  GS_next --> PL_reset_keys
   GS_chk_over --> GS_over
-  GS_chk_over --> PL_hp
   GS_chk_clear --> GS_cleared
-  GS_step --> PL_pos
-  GS_step --> PL_last
-  GS_step --> FL_print
-  GS_step --> FL_enter
-  GS_step --> MON_incr
-  GS_step --> MON_move
-  GS_step --> FL_battle
-  GS_step --> FL_goal_chk
-  GS_step --> GS_next
-  GS_step --> GS_chk_over
-  GS_step --> GS_chk_clear
+  GS_step --> GS_floor
+  GS_step --> GS_player
+  GS_chk_over --> PL_hp_ext
+  GS_step --> PL_pos_ext
+  GS_step --> PL_status_ext
+  GS_step --> PL_use_ext
+  GS_step --> FL_print_ext
+  GS_step --> FL_enter_ext
+  GS_step --> FL_battle_ext
+  GS_step --> FL_goal_ext
+  GS_step --> MON_incr_ext
+  GS_step --> MON_move_ext
+```
 
-  %% Floor edges
-  FL_ctor --> FL_id
+**GameState が利用する他クラスのメンバー**
+- `Floor.__init__` / `Floor.start` ― `GameState.__init__` と `start_floor` がフロア生成時に呼び出し（modules/game_state.py:28-34, 80-92）。
+- `Player` ― `GameState.__init__` で `Player(self.floor.start)` を生成し、`next_floor` で `player.floor_clear_keys_reset()` を呼ぶ（modules/game_state.py:31, 56）。
+- `Player.print_status` / `Player.use_potion` / `Player.recalculate_attack` ― `step_turn` がステータス表示・ポーション使用・ゴール後の攻撃力再計算で使用（modules/game_state.py:96, 108, 162）。
+- `Floor.print_grid` / `Floor.enter_cell` / `Floor.battle_monster` / `Floor.check_goal` ― `step_turn` の描画・イベント・戦闘・ゴール判定処理（modules/game_state.py:94, 126, 151, 154）。
+- `Monster.increment_turn` / `Monster.monster_next_move` ― 1ターン毎のAI更新（modules/game_state.py:130-147）。
+- `try_move_player` / `DIRECTIONS` ― 入力に応じてプレイヤー座標を算出（modules/game_state.py:117, 201-218）。
+
+**GameState が他クラスから参照される箇所**
+- `main.py:9` と `main.py:14` で `GameState()` を生成してゲームループを駆動。
+- `modules/game_state.py` 以外から直接 GameState の変数・メソッドを読む箇所はなく、外部公開 API は `GameState.game_state()` と `GameState.step_turn()` のみ。
+
+### Floor
+```mermaid
+graph LR
+  classDef floor fill:#fff8e1,stroke:#ff6f00,color:#000;
+  classDef gs fill:#fde4ec,stroke:#c2185b,color:#000;
+  classDef player fill:#e3f2fd,stroke:#1565c0,color:#000;
+  classDef monster fill:#ede7f6,stroke:#5e35b1,color:#000;
+  classDef items fill:#f1f8e9,stroke:#558b2f,color:#000;
+  classDef obj fill:#fbe9e7,stroke:#e64a19,color:#000;
+  subgraph Main_Floor["Floor"]
+    direction LR
+    subgraph FL_V["Vars"]
+      direction TB
+      FL_id["floor_id"]:::floor
+      FL_grid["grid"]:::floor
+      FL_json["json_path"]:::floor
+      FL_map["map_size"]:::floor
+      FL_move["movable_cells"]:::floor
+      FL_info["info (JSON)"]:::floor
+      FL_name["name"]:::floor
+      FL_reveal["reveal_hidden"]:::floor
+      FL_start["start"]:::floor
+      FL_goal_type["goal.type"]:::floor
+      FL_goal_pos["goal.pos"]:::floor
+      FL_goal_keys["goal.keys"]:::floor
+      FL_items["items dict"]:::floor
+      FL_monsters["monsters dict"]:::floor
+      FL_doors["doors dict"]:::floor
+      FL_chests["chests dict"]:::floor
+      FL_tp["teleports dict"]:::floor
+      FL_gimmicks["gimmicks"]:::floor
+      FL_rule["rule text"]:::floor
+    end
+    subgraph FL_M["Methods"]
+      direction TB
+      FL_ctor(["__init__"]):::floor
+      FL_read(["_read_json_data"]):::floor
+      FL_goal_init(["_goal_init"]):::floor
+      FL_items_init(["_items_init"]):::floor
+      FL_mons_init(["_monsters_init"]):::floor
+      FL_doors_init(["_doors_init"]):::floor
+      FL_chests_init(["_chests_init"]):::floor
+      FL_tp_init(["_teleports_init"]):::floor
+      FL_gim_init(["_gimmicks_init"]):::floor
+      FL_rule_init(["_rules_init"]):::floor
+      FL_collect(["_collect_entity_symbols"]):::floor
+      FL_print(["print_grid"]):::floor
+      FL_handle(["_handle_cell_items"]):::floor
+      FL_enter(["enter_cell"]):::floor
+      FL_battle(["battle_monster"]):::floor
+      FL_goal_chk(["check_goal"]):::floor
+      FL_info_print(["print_info"]):::floor
+    end
+  end
+  subgraph Others
+    direction TB
+    subgraph O_GameState["GameState"]
+      direction TB
+      GS_step_ext(["step_turn"]):::gs
+      GS_start_ext(["start_floor"]):::gs
+    end
+    subgraph O_PlayerF["Player"]
+      direction TB
+      PL_pos_ext["position"]:::player
+      PL_hp_ext["hp"]:::player
+      PL_inv_ext["inventory"]:::player
+    end
+    subgraph O_Items["Items"]
+      direction TB
+      IT_create_ext(["create_item"]):::items
+      IT_apply_ext(["Item.apply_effect"]):::items
+    end
+    subgraph O_Monsters["Monster"]
+      direction TB
+      MON_ctor_ext(["__init__"]):::monster
+      MON_hp_ext["hp"]:::monster
+      MON_alive_ext["alive"]:::monster
+    end
+    subgraph O_Obj["Objects/Gimmicks"]
+      direction TB
+      TP_dest_ext(["Teleport.get_destination"]):::obj
+      GM_apply_ext(["apply_terrain_damage"]):::obj
+      GM_ice_ext(["ice_gimmick_effect"]):::obj
+      CH_return_ext(["Chest.return_contents"]):::obj
+    end
+  end
   FL_ctor --> FL_grid
   FL_ctor --> FL_json
   FL_ctor --> FL_map
@@ -473,14 +468,6 @@ graph LR
   FL_ctor --> FL_name
   FL_ctor --> FL_reveal
   FL_ctor --> FL_start
-  FL_ctor --> FL_rule
-  FL_ctor --> FL_goal_init
-  FL_ctor --> FL_items_init
-  FL_ctor --> FL_mons_init
-  FL_ctor --> FL_doors_init
-  FL_ctor --> FL_chests_init
-  FL_ctor --> FL_tp_init
-  FL_ctor --> FL_gimmicks_init
   FL_goal_init --> FL_goal_type
   FL_goal_init --> FL_goal_pos
   FL_goal_init --> FL_goal_keys
@@ -489,41 +476,113 @@ graph LR
   FL_doors_init --> FL_doors
   FL_chests_init --> FL_chests
   FL_tp_init --> FL_tp
-  FL_gimmicks_init --> FL_gimmicks
+  FL_gim_init --> FL_gimmicks
   FL_rule_init --> FL_rule
+  FL_collect --> FL_items
+  FL_collect --> FL_monsters
+  FL_collect --> FL_doors
+  FL_collect --> FL_chests
+  FL_collect --> FL_tp
+  FL_print --> FL_collect
   FL_handle --> FL_items
-  FL_handle --> IT_picked
-  FL_handle --> IT_apply
-  FL_handle --> PL_inv
-  FL_handle --> PL_keys
-  FL_handle --> PL_pots
   FL_enter --> FL_handle
-  FL_enter --> GM_ice_eff
-  FL_enter --> GM_apply_damage
-  FL_enter --> TP_dest
-  FL_enter --> PL_pos
-  FL_enter --> PL_hp
-  FL_battle --> MON_hp
-  FL_battle --> MON_alive
-  FL_battle --> MON_drop
-  FL_battle --> PL_hp
-  FL_battle --> PL_inv
-  FL_battle --> IT_create
-  FL_battle --> IT_apply
+  FL_enter --> FL_gimmicks
+  FL_enter --> FL_tp
+  FL_battle --> FL_monsters
   FL_goal_chk --> FL_goal_pos
   FL_goal_chk --> FL_goal_keys
-  FL_goal_chk --> PL_pos
-  FL_goal_chk --> PL_inv
+  GS_step_ext --> FL_print
+  GS_step_ext --> FL_enter
+  GS_step_ext --> FL_battle
+  GS_step_ext --> FL_goal_chk
+  GS_start_ext --> FL_ctor
+  FL_handle --> PL_inv_ext
+  FL_enter --> PL_pos_ext
+  FL_enter --> PL_hp_ext
+  FL_handle --> IT_apply_ext
+  FL_enter --> GM_ice_ext
+  FL_enter --> GM_apply_ext
+  FL_enter --> TP_dest_ext
+  FL_battle --> MON_hp_ext
+  FL_battle --> MON_alive_ext
+  FL_battle --> IT_create_ext
+  FL_handle --> CH_return_ext
+```
 
-  %% Player edges
+**Floor が利用する他クラスのメンバー**
+- `Item.create_item` ― `_items_init` でマップ定義からインスタンス化し、`battle_monster` のドロップ生成でも呼び出し（modules/floor.py:192-200, 349-355）。
+- `Monster` / `Door` / `Chest` / `Teleport` / `Gimmicks` ― それぞれの `_init` 系メソッドで JSON を読み込みクラスを生成（modules/floor.py:152-211）。
+- `Player.position` ― `print_grid` で描画位置を特定し、`enter_cell` / `check_goal` でゴール判定・ギミック処理を実行（modules/floor.py:266, 308-324, 383-398）。
+- `Player.add_item` / `player.hp` / `player.attack` ― `_handle_cell_items` や `battle_monster` 内でアイテム効果・戦闘結果を反映（modules/floor.py:301-360）。
+- `Gimmicks.ice_gimmick_effect` / `apply_terrain_damage` ― `enter_cell` で氷床・ダメージ床を処理（modules/floor.py:309-318）。
+- `Teleport.get_destination` ― `enter_cell` から転送先を決定（modules/floor.py:321-324）。
+
+**Floor が他クラスから参照される箇所**
+- `GameState.__init__` / `start_floor` が `Floor` を生成し `self.floor` に保持（modules/game_state.py:28-34, 80-92）。
+- `GameState.step_turn` が `print_grid`, `enter_cell`, `battle_monster`, `check_goal`, `floor.monsters` を直接呼び出し（modules/game_state.py:94-155）。
+- `GameState.step_turn` と `try_move_player` が `floor.grid` / `floor.start` / `floor.rule` を参照（modules/game_state.py:33, 117, 160-165, 201-218）。
+
+### Player
+```mermaid
+graph LR
+  classDef player fill:#e3f2fd,stroke:#1565c0,color:#000;
+  classDef floor fill:#fff8e1,stroke:#ff6f00,color:#000;
+  classDef gs fill:#fde4ec,stroke:#c2185b,color:#000;
+  classDef items fill:#f1f8e9,stroke:#558b2f,color:#000;
+  subgraph Main_Player["Player"]
+    direction LR
+    subgraph PL_V["Vars"]
+      direction TB
+      PL_pos["position"]:::player
+      PL_hp["hp"]:::player
+      PL_attack["attack"]:::player
+      PL_eq_id["equipped_weapon_id"]:::player
+      PL_eq_atk["equipped_weapon_attack"]:::player
+      PL_inv["inventory"]:::player
+      PL_keys["keys set"]:::player
+      PL_pots["potions set"]:::player
+      PL_last["last_move_direction"]:::player
+    end
+    subgraph PL_M["Methods"]
+      direction TB
+      PL_print(["print_status"]):::player
+      PL_inv_print(["print_inventory"]):::player
+      PL_add(["add_item"]):::player
+      PL_reset(["floor_clear_keys_reset"]):::player
+      PL_use(["use_potion"]):::player
+      PL_recalc(["recalculate_attack"]):::player
+      PL_equip(["equip_weapon"]):::player
+      PL_org(["item_organizing"]):::player
+    end
+  end
+  subgraph Others
+    direction TB
+    subgraph O_GameStateP["GameState"]
+      direction TB
+      GS_step_ext(["step_turn"]):::gs
+    end
+    subgraph O_FloorP["Floor"]
+      direction TB
+      FL_handle_ext(["_handle_cell_items"]):::floor
+      FL_enter_ext(["enter_cell"]):::floor
+      FL_battle_ext(["battle_monster"]):::floor
+    end
+    subgraph O_ItemsP["Items"]
+      direction TB
+      WPN_apply_ext(["Weapon.apply_effect"]):::items
+      KEY_apply_ext(["Key.apply_effect"]):::items
+      POT_apply_ext(["Potion.apply_effect"]):::items
+      TRP_apply_ext(["Trap.apply_effect"]):::items
+    end
+  end
   PL_print --> PL_hp
   PL_print --> PL_attack
   PL_inv_print --> PL_inv
   PL_add --> PL_inv
   PL_add --> PL_keys
   PL_add --> PL_pots
-  PL_reset_keys --> PL_keys
-  PL_reset_keys --> PL_inv
+  PL_reset --> PL_keys
+  PL_reset --> PL_inv
   PL_use --> PL_pots
   PL_use --> PL_inv
   PL_use --> PL_hp
@@ -532,8 +591,78 @@ graph LR
   PL_equip --> PL_eq_atk
   PL_equip --> PL_attack
   PL_org --> PL_inv
+  GS_step_ext --> PL_pos
+  GS_step_ext --> PL_last
+  FL_handle_ext --> PL_inv
+  FL_handle_ext --> PL_keys
+  FL_handle_ext --> PL_pots
+  FL_enter_ext --> PL_hp
+  FL_enter_ext --> PL_pos
+  FL_battle_ext --> PL_hp
+  FL_battle_ext --> PL_inv
+  WPN_apply_ext --> PL_equip
+  KEY_apply_ext --> PL_keys
+  POT_apply_ext --> PL_hp
+  TRP_apply_ext --> PL_hp
+```
 
-  %% Monster edges
+**Player が参照する／される主要箇所**
+- `GameState.step_turn` が `Player.position` を更新し、`last_move_direction`・`print_status()`・`use_potion()` を呼び出し（modules/game_state.py:94-123, 108）。
+- `try_move_player` が `player.position` を読み取り移動可否を判定（modules/game_state.py:201-218）。
+- `Floor.print_grid` / `Floor.enter_cell` / `Floor.check_goal` が `Player.position` を参照して描画やゴール判定を処理（modules/floor.py:266, 308-324, 383-398）。
+- `Floor.enter_cell` / `Floor.battle_monster` / `GameState.check_game_over` / `Items.Potion.apply_effect` / `Items.Trap.apply_effect` が `Player.hp` を増減（modules/floor.py:316-360, modules/game_state.py:66, modules/items.py:53-64）。
+- `Floor.battle_monster` が `Player.attack` を使ってモンスターHPを計算し、ドロップ処理で `player.add_item()` を呼ぶ（modules/floor.py:340-355）。
+- `Floor.check_goal` が `player.inventory` / `player.keys` を参照して鍵条件を確認（modules/floor.py:388-399）。
+- `Gimmicks.ice_gimmick_effect` が `player.last_move_direction` を参照して滑走方向を決める（modules/objects.py:108-122）。
+- `GameState.next_floor` が `player.floor_clear_keys_reset()` を呼び、ゴール後 `player.recalculate_attack()` で攻撃力を再計算（modules/game_state.py:56, 162）。
+
+### Monster
+```mermaid
+graph LR
+  classDef monster fill:#ede7f6,stroke:#5e35b1,color:#000;
+  classDef gs fill:#fde4ec,stroke:#c2185b,color:#000;
+  classDef floor fill:#fff8e1,stroke:#ff6f00,color:#000;
+  subgraph Main_Monster["Monster"]
+    direction LR
+    subgraph MON_V["Vars"]
+      direction TB
+      MON_id["id"]:::monster
+      MON_pos["pos"]:::monster
+      MON_next["next_pos"]:::monster
+      MON_ai["ai_type"]:::monster
+      MON_ai_param["ai_params"]:::monster
+      MON_move_every["move_every"]:::monster
+      MON_turn["turn_counter"]:::monster
+      MON_drop["drop_list"]:::monster
+      MON_strength["strength"]:::monster
+      MON_alive["alive"]:::monster
+      MON_hp["hp"]:::monster
+      MON_atk["attack"]:::monster
+      MON_patrol["patrol_points"]:::monster
+      MON_patrol_idx["patrol_point"]:::monster
+      MON_debug["debug_path"]:::monster
+    end
+    subgraph MON_M["Methods"]
+      direction TB
+      MON_ctor(["__init__"]):::monster
+      MON_status(["init_status"]):::monster
+      MON_incr(["increment_turn"]):::monster
+      MON_reset(["reset_turn_counter"]):::monster
+      MON_move(["monster_next_move"]):::monster
+      MON_bfs(["bfs"]):::monster
+    end
+  end
+  subgraph Others
+    direction TB
+    subgraph O_GameStateM["GameState"]
+      direction TB
+      GS_step_ext(["step_turn"]):::gs
+    end
+    subgraph O_FloorM["Floor"]
+      direction TB
+      FL_battle_ext(["battle_monster"]):::floor
+    end
+  end
   MON_ctor --> MON_id
   MON_ctor --> MON_pos
   MON_ctor --> MON_ai
@@ -543,64 +672,167 @@ graph LR
   MON_ctor --> MON_strength
   MON_ctor --> MON_status
   MON_status --> MON_hp
-  MON_status --> MON_attack
-  MON_status --> MON_patrol_points
+  MON_status --> MON_atk
+  MON_status --> MON_patrol
   MON_status --> MON_patrol_idx
   MON_incr --> MON_turn
   MON_reset --> MON_turn
   MON_move --> MON_pos
-  MON_move --> MON_next_pos
+  MON_move --> MON_next
   MON_bfs --> MON_debug
+  GS_step_ext --> MON_incr
+  GS_step_ext --> MON_move
+  FL_battle_ext --> MON_hp
+  FL_battle_ext --> MON_alive
+```
 
-  %% Item edges
+**Monster が参照する／される主要箇所**
+- `GameState.step_turn` が各 `monster.increment_turn()` / `monster.monster_next_move()` を呼んで `monster.pos` を更新し、`occupied` セットで衝突判定を行う（modules/game_state.py:130-149）。
+- `Floor._collect_entity_symbols` と `Floor.print_grid` が `monster.alive`, `monster.strength`, `monster.pos` を描画に利用（modules/floor.py:229-233）。
+- `Floor.battle_monster` が `monster.hp`, `monster.attack`, `monster.drop_list`, `monster.alive` を更新し、勝敗を決める（modules/floor.py:340-360）。
+- `GameState.step_turn` の戦闘判定でも `monster.pos` が `Player.position` と比較される（modules/game_state.py:146-150）。
+
+### Items
+```mermaid
+graph LR
+  classDef item fill:#f1f8e9,stroke:#558b2f,color:#000;
+  classDef floor fill:#fff8e1,stroke:#ff6f00,color:#000;
+  classDef player fill:#e3f2fd,stroke:#1565c0,color:#000;
+  subgraph Main_Items["Items"]
+    direction LR
+    subgraph IT_V["Vars"]
+      direction TB
+      IT_id["id"]:::item
+      IT_type["type"]:::item
+      IT_pos["pos"]:::item
+      IT_hidden["hidden"]:::item
+      IT_params["params"]:::item
+      IT_picked["picked"]:::item
+    end
+    subgraph IT_M["Methods"]
+      direction TB
+      IT_create(["create_item"]):::item
+      IT_apply(["Item.apply_effect"]):::item
+      KEY_apply(["Key.apply_effect"]):::item
+      WPN_apply(["Weapon.apply_effect"]):::item
+      POT_apply(["Potion.apply_effect"]):::item
+      TRP_apply(["Trap.apply_effect"]):::item
+      DMY_apply(["Dummy.apply_effect"]):::item
+    end
+  end
+  subgraph Others
+    direction TB
+    subgraph O_FloorI["Floor"]
+      direction TB
+      FL_handle_ext(["_handle_cell_items"]):::floor
+      FL_battle_ext(["battle_monster"]):::floor
+    end
+    subgraph O_PlayerI["Player"]
+      direction TB
+      PL_inv_ext["inventory"]:::player
+      PL_hp_ext["hp"]:::player
+    end
+  end
   IT_create --> IT_id
   IT_create --> IT_type
   IT_create --> IT_pos
   IT_create --> IT_hidden
   IT_create --> IT_params
-  WPN_apply --> PL_equip
-  POT_apply --> PL_hp
-  TRP_apply --> PL_hp
-  KEY_apply --> PL_keys
-  IT_apply --> PL_inv
-
-  %% Object edges
-  CH_return --> IT_create
-  TP_dest --> PL_pos
-  GM_ice_eff --> PL_pos
-  GM_apply_damage --> PL_hp
-  GM_norm --> GM_ice
-  GM_norm --> GM_terrain
-
-  %% Cross links
-  GS_floor --> FL_ctor
-  GS_player --> PL_pos
-  GS_next --> GS_floor
-  GS_next --> GS_player
-  FL_monsters --> MON_ctor
-  FL_items --> IT_create
-  FL_tp --> TP_dest
-  FL_gimmicks --> GM_ice_eff
-  FL_gimmicks --> GM_apply_damage
-  PL_attack --> MON_hp
-  MON_attack --> PL_hp
-
-  classDef gamestate fill:#fde4ec,stroke:#c2185b,color:#000;
-  classDef floor fill:#fff8e1,stroke:#ff6f00,color:#000;
-  classDef player fill:#e3f2fd,stroke:#1565c0,color:#000;
-  classDef monster fill:#ede7f6,stroke:#5e35b1,color:#000;
-  classDef items fill:#f1f8e9,stroke:#558b2f,color:#000;
-  classDef objects fill:#fbe9e7,stroke:#e64a19,color:#000;
-
-  class GS_is,GS_req,GS_floors,GS_clear,GS_idx,GS_over,GS_cleared,GS_floor,GS_player,GS_init,GS_game,GS_start,GS_next,GS_chk_over,GS_chk_clear,GS_read,GS_step gamestate;
-  class FL_id,FL_grid,FL_json,FL_map,FL_move,FL_info,FL_name,FL_reveal,FL_start,FL_goal_type,FL_goal_pos,FL_goal_keys,FL_items,FL_monsters,FL_doors,FL_chests,FL_tp,FL_gimmicks,FL_rule,FL_ctor,FL_read,FL_goal_init,FL_items_init,FL_mons_init,FL_doors_init,FL_chests_init,FL_tp_init,FL_gimmicks_init,FL_rule_init,FL_print_info,FL_collect,FL_print,FL_handle,FL_enter,FL_battle,FL_goal_chk floor;
-  class PL_pos,PL_hp,PL_attack,PL_eq_id,PL_eq_atk,PL_inv,PL_keys,PL_pots,PL_last,PL_print,PL_inv_print,PL_add,PL_reset_keys,PL_use,PL_recalc,PL_equip,PL_org player;
-  class MON_id,MON_pos,MON_next_pos,MON_ai,MON_ai_param,MON_move_every,MON_turn,MON_drop,MON_strength,MON_alive,MON_hp,MON_attack,MON_patrol_points,MON_patrol_idx,MON_debug,MON_ctor,MON_status,MON_incr,MON_reset,MON_move,MON_bfs monster;
-  class IT_id,IT_type,IT_pos,IT_hidden,IT_params,IT_picked,IT_create,IT_apply,KEY_apply,WPN_apply,POT_apply,TRP_apply,DMY_apply items;
-  class DR_id,DR_pos,DR_req,DR_open,CH_id,CH_pos,CH_req,CH_cont,CH_open,TP_id,TP_src,TP_tgt,TP_req,TP_bi,GM_grid,GM_cells,GM_params,GM_ice,GM_terrain,GM_damage,CH_return,TP_dest,GM_norm,GM_is,GM_ice_eff,GM_terrain_val,GM_apply_damage objects;
+  IT_apply --> IT_picked
+  KEY_apply --> IT_picked
+  WPN_apply --> IT_picked
+  POT_apply --> IT_picked
+  TRP_apply --> IT_picked
+  DMY_apply --> IT_picked
+  FL_handle_ext --> IT_picked
+  FL_battle_ext --> IT_create
+  WPN_apply --> PL_inv_ext
+  POT_apply --> PL_hp_ext
+  TRP_apply --> PL_hp_ext
 ```
 
-矢印は「左ノードのメソッドが右ノードの変数や他メソッドに作用する」ことを示します。色は GameState=ピンク、Floor=黄、Player=水色、Monster=紫、Items=緑、Objects/Gimmicks=オレンジです。
+**Items が参照する／される主要箇所**
+- `Floor._items_init` / `Floor.battle_monster` が `Item.create_item()` を呼び、マップ定義やドロップから実体化（modules/floor.py:192-200, 349-355）。
+- `Floor._handle_cell_items` が `Item.apply_effect()` を実行し、`player.add_item()` や `Item.picked` を更新（modules/floor.py:296-305）。
+- `Items.Weapon.apply_effect` が `Player.equip_weapon()` を介して攻撃力を更新（modules/items.py:41-47）。
+- `Items.Potion.apply_effect` / `Items.Trap.apply_effect` が `Player.hp` を直接変更（modules/items.py:52-65）。
+- `Chest.return_contents()` が `Item.create_item()` を使い、`Floor._handle_cell_items` 経由でプレイヤーに渡る（modules/objects.py:40-53, modules/floor.py:296-305）。
 
+### Objects / Gimmicks
+```mermaid
+graph LR
+  classDef obj fill:#fbe9e7,stroke:#e64a19,color:#000;
+  classDef floor fill:#fff8e1,stroke:#ff6f00,color:#000;
+  classDef player fill:#e3f2fd,stroke:#1565c0,color:#000;
+  subgraph Main_Object["Objects/Gimmicks"]
+    direction LR
+    subgraph OBJ_V["Vars"]
+      direction TB
+      DR_id["Door.id"]:::obj
+      DR_pos["Door.pos"]:::obj
+      DR_req["Door.requires_key"]:::obj
+      DR_open["Door.opened"]:::obj
+      CH_id["Chest.id"]:::obj
+      CH_pos["Chest.pos"]:::obj
+      CH_req["Chest.requires_key"]:::obj
+      CH_contents["Chest.contents"]:::obj
+      CH_open["Chest.opened"]:::obj
+      TP_id["Teleport.id"]:::obj
+      TP_src["source"]:::obj
+      TP_tgt["target"]:::obj
+      TP_req["requires_key"]:::obj
+      TP_bi["bidirectional"]:::obj
+      GM_grid["Gimmicks.grid"]:::obj
+      GM_cells["moveable_cells"]:::obj
+      GM_params["params"]:::obj
+      GM_ice["ice_regions"]:::obj
+      GM_terrain["terrain_regions"]:::obj
+      GM_damage["terrain_damage"]:::obj
+    end
+    subgraph OBJ_M["Methods"]
+      direction TB
+      CH_return(["Chest.return_contents"]):::obj
+      TP_dest(["Teleport.get_destination"]):::obj
+      GM_norm(["Gimmicks._normalize_region_list"]):::obj
+      GM_is(["is_gimmick_cell / is_ice_cell"]):::obj
+      GM_ice_eff(["ice_gimmick_effect"]):::obj
+      GM_terrain_val(["terrain_damage_value"]):::obj
+      GM_apply(["apply_terrain_damage"]):::obj
+    end
+  end
+  subgraph Others
+    direction TB
+    subgraph O_FloorO["Floor"]
+      direction TB
+      FL_enter_ext(["enter_cell"]):::floor
+      FL_handle_ext(["_handle_cell_items"]):::floor
+    end
+    subgraph O_PlayerO["Player"]
+      direction TB
+      PL_pos_ext["position"]:::player
+      PL_hp_ext["hp"]:::player
+    end
+  end
+  CH_return --> CH_contents
+  TP_dest --> TP_src
+  TP_dest --> TP_tgt
+  GM_norm --> GM_ice
+  GM_norm --> GM_terrain
+  GM_is --> GM_ice
+  GM_is --> GM_terrain
+  GM_ice_eff --> GM_ice
+  GM_terrain_val --> GM_terrain
+  GM_apply --> GM_damage
+  FL_enter_ext --> TP_dest
+  FL_enter_ext --> GM_ice_eff
+  FL_enter_ext --> GM_apply
+  FL_handle_ext --> CH_return
+  GM_apply --> PL_hp_ext
+  TP_dest --> PL_pos_ext
+```
 
-
+**Objects / Gimmicks が参照する／される主要箇所**
+- `Floor._doors_init` / `_chests_init` / `_teleports_init` が JSON から `Door` / `Chest` / `Teleport` を生成し `Floor` 上に配置（modules/floor.py:205-211）。
+- `Floor.enter_cell` が `Teleport.get_destination()` を呼んでプレイヤーを転送し、`Gimmicks.ice_gimmick_effect()` と `Gimmicks.apply_terrain_damage()` を使って氷床・ダメージ床を処理（modules/floor.py:308-324）。
+- `Floor._handle_cell_items` が `Chest.return_contents()` を呼び出し、宝箱の中身を `Item` として展開（modules/floor.py:296-305, modules/objects.py:34-53）。
+- `Gimmicks` 内部では `player.last_move_direction` / `player.position` / `player.hp` を参照して滑走・ダメージ演算を行う（modules/objects.py:108-141）。
