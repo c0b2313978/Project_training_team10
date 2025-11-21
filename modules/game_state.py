@@ -109,7 +109,9 @@ class GameState:
             return
         
         elif command == 'r':
+            print()
             print(self.floor.rule)
+            print("\n")
             return
         
         new_position = try_move_player(self.player, command, self.floor.grid)
@@ -157,8 +159,10 @@ class GameState:
             if not self.is_game_cleared:
                 self.floor = self.start_floor()
                 self.player.position = self.floor.start
+                self.player.attack = Player.BASE_ATK
                 print() #マップごとのルール説明
                 print(self.floor.rule)
+                print("\n")
             else:
                 self.check_game_cleared()  #この関数が発生しないbugを直した
             return

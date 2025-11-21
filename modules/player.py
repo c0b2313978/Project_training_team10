@@ -32,10 +32,10 @@ class Player:
                 print(f"\t{item}: {id}")
         else:
             if self.potions:
-                print(f"\tPotions: {len(self.potions)}")
+                print(f"\tPotions: {'🧪' * len(self.potions)}")
             
-            if self.keys:  # キーid一覧を表示
-                print(f"\tKeys: {self.keys}")
+            if self.keys:  # キーid一覧を表示 だったやつをアイコンの個数で表現するようにした
+                print(f"\tKeys: {'🔑' * len(self.keys)}")
 
     def add_item(self, item: Item) -> None:
         """ アイテムをインベントリに追加する """
