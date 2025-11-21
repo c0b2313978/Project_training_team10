@@ -27,7 +27,7 @@ ENTITY_SYMBOLS = {
 
 # マップを表示する際のシンボル定義 全角
 ENTITY_SYMBOLS_FULL_WIDTH = {
-    "player": "🔴",
+    "player": "🧍",
     "goal": "🚩",
     "path": "　",
     "wall": "🔳",
@@ -36,6 +36,9 @@ ENTITY_SYMBOLS_FULL_WIDTH = {
     "key": "🔑",
     "trap": "💥",
     "monster": "👾",
+    "monster_weak": "🐁",  # ここ
+    "monster_normal": "👾",
+    "monster_strong": "🐉",
     "opened_door": "　",
     "closed_door": "🚪",
     "closed_chest": "🧰",
@@ -207,8 +210,9 @@ class Floor:
         print(self.teleports)
 
     # ===== マップ上のシンボル収集 =====
-    def _collect_entity_symbols(self) -> dict[tuple[int, int], str]:
+    def _collect_entity_symbols(self, full_width = True) -> dict[tuple[int, int], str]:
         """ マップ上のアイテム・モンスター・ギミックのシンボルを収集し、位置とシンボルの辞書を返す """
+        symbol_map = ENTITY_SYMBOLS_FULL_WIDTH if full_width else ENTITY_SYMBOLS
 
         symbols: dict[tuple[int, int], str]= {}  # 位置: シンボルのタイプ
         # items
@@ -223,7 +227,8 @@ class Floor:
         # monsters
         for monster in self.monsters.values():
             if monster.alive:
-                symbols[monster.pos] = "monster"
+                monster_strength_key = f"monster_{monster.strength}"
+                symbols[monster.pos] = monster_strength_key if (monster_strength_key in symbol_map) else "monster"
 
         # doors
         for door in self.doors.values():
