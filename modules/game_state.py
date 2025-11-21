@@ -15,6 +15,8 @@ class GameState:
         else:
             self.all_floors = random.sample(list(range(1, TOTAL_FLOORS + 1)), TARGET_CLEAR)  # クリア必要フロアリスト
             # self.all_floors = list(range(1, TOTAL_FLOORS + 1))  # デバッグ用：全フロアクリア
+            self.all_floors.append(0)  #  強制的にmap00を追加
+            TARGET_CLEAR+=1
             print(f"Selected Floors to Clear: {self.all_floors}")  # デバッグ用表示
 
         self.cleared_count = 0  # クリア済みフロア数
@@ -70,7 +72,9 @@ class GameState:
     def check_game_cleared(self) -> bool:
         """ ゲームクリア判定 """
         if self.is_game_cleared:
-            # print("おめでとうございます！すべてのフロアをクリアしました！")
+            print("\n\n\n")
+            print_game_text("game_texts/Ending.txt")
+            print("Congratulations on clearing the game!")
             return True
         return False
 
@@ -79,8 +83,8 @@ class GameState:
     def read_command(self) -> str:
         """ プレイヤーからのコマンド入力を受け取る """
         while True:
-            command = input("(w/a/s/d 移動, u:ポーション, q:終了) > ").strip().lower()
-            if command in ['w', 'a', 's', 'd', 'u', 'q']:
+            command = input("(w/a/s/d 移動, u:ポーション, r:ルール表示, q:終了) > ").strip().lower()
+            if command in ['w', 'a', 's', 'd', 'u', 'q', 'r']:
                 return command
             # print("不正ななコマンドです。{w, a, s, d, u, q} のいずれかを入力してください。")
 
@@ -92,7 +96,7 @@ class GameState:
         self.player.print_status()
         print()
 
-        if not command in ['w', 'a', 's', 'd', 'u', 'q']:
+        if not command in ['w', 'a', 's', 'd', 'u', 'q', 'r']:
             command = self.read_command()  # コマンド入力
 
         if command == 'q':
@@ -102,6 +106,10 @@ class GameState:
 
         elif command == 'u':
             self.player.use_potion()  # ポーション使用
+            return
+        
+        elif command == 'r':
+            print(self.floor.rule)
             return
         
         new_position = try_move_player(self.player, command, self.floor.grid)
@@ -151,6 +159,8 @@ class GameState:
                 self.player.position = self.floor.start
                 print() #マップごとのルール説明
                 print(self.floor.rule)
+            else:
+                self.check_game_cleared()  #この関数が発生しないbugを直した
             return
         else:
             if goal_message:
@@ -179,10 +189,10 @@ def print_all_opening():
 # プレイヤーからのコマンド入力を受け取る
 def read_player_command() -> str:
     while True:
-        command = input("(w/a/s/d 移動, u:ポーション, q:終了) > ").strip().lower()
-        if command in ['w', 'a', 's', 'd', 'u', 'q']:
+        command = input("(w/a/s/d 移動, u:ポーション, r:ルール表示, q:終了) > ").strip().lower()
+        if command in ['w', 'a', 's', 'd', 'u', 'q', 'r']:
             return command
-        print("不正ななコマンドです。{w, a, s, d, u, q} のいずれかを入力してください。")
+        print("不正ななコマンドです。{w, a, s, d, u, q, r} のいずれかを入力してください。")
         # print("Invalid command! Please enter w, a, s, d, u, or q.")
 
 

@@ -11,7 +11,7 @@ def main():
         game_state.step_turn()
 
 def tmp():
-    game_state = GameState(requires_map_file_path=["map_data/map06.txt"])  # デバッグ用：特定フロア指定
+    game_state = GameState(requires_map_file_path=["map_data/map00.txt"])  # デバッグ用：特定フロア指定
     while game_state.game_state():
         # command = game_state.read_command()
         # os.system('cls' if os.name == 'nt' else 'clear')  # 画面クリア
@@ -19,5 +19,5 @@ def tmp():
 
 
 if __name__ == "__main__":
-    main()
-    # tmp()
+    #main()
+    tmp()

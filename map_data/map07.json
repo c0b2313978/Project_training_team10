@@ -5,7 +5,7 @@
     "goal": {
         "type": "reach_and_keys",
         "pos": [5, 12],
-        "keys": ["key"]
+        "keys": ["floor_key"]
     },
     "items": [
         {"id": "key", "type": "key", "pos": [4, 11], "hidden": true},
