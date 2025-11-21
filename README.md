@@ -218,18 +218,60 @@ T ←テレポ台
 ## クラス間の主な影響関係 (mermaid)
 ```mermaid
 flowchart TB
-  main["main.py\nGameState() 実行"] --> gsStep["GameState.step_turn"]
-  gsStep -->|入力/位置更新| move["try_move_player\n-> Player.position"]
-  gsStep --> enter["Floor.enter_cell\nアイテム/ギミック/テレポ処理"]
-  enter -->|拾う/即時効果| itemEff["Item.apply_effect\n-> Player.hp/attack\n+ Player.add_item"]
-  enter -->|氷/地形ダメージ| gimmickEff["Gimmicks.ice_gimmick_effect / apply_terrain_damage\n-> Player.position/hp"]
-  enter -->|転送| tpEff["Teleport.get_destination\n-> Player.position"]
-  gsStep --> monMove["Monster.monster_next_move\n(DIRECTIONS/BFS)"]
-  monMove --> monPos["Monster.pos 更新"]
-  gsStep --> battle["Floor.battle_monster\nターン制ダメージ"]
-  battle --> hpDown["Player.hp 減少"]
-  battle --> drops["Monster.drop_list\nItem.create_item ->\nPlayer.add_item/apply_effect"]
-  gsStep --> goal["Floor.check_goal\nPlayer.position & keys 判定"]
-  goal -->|成功| next["GameState.next_floor\nFloor 再生成\nPlayer.floor_clear_keys_reset"]
+  main["main.py<br>main()"] --> gsInit["GameState.__init__<br>フロア抽選 + Player生成"]
+  gsInit --> floorInit["GameState.start_floor<br>Floor(...) 作成"]
+  floorInit --> floorLoad["Floor.__init__<br>read_map_data + JSON読込"]
+  floorLoad --> comp["Item / Monster / Door / Chest / Teleport / Gimmicks<br>各クラスを初期化"]
+  gsInit --> loop["GameState.step_turn<br>(ゲームループ)"]
+  loop --> render["Floor.print_grid +<br>Player.print_status"]
+  loop --> move["try_move_player<br>-> Player.position / last_move_direction"]
+  move --> enterCell["Floor.enter_cell"]
+  enterCell --> items["Item.create_item 派生<br>apply_effect / Player.add_item"]
+  items --> player["Player<br>hp・attack・inventory更新<br>equip_weapon / use_potion"]
+  enterCell --> gimmicks["Gimmicks<br>ice_gimmick_effect / apply_terrain_damage"]
+  gimmicks --> player
+  enterCell --> teleDoor["Teleport / Door / Chest<br>get_destination, opened 判定"]
+  teleDoor --> player
+  loop --> monsters["Monster.increment_turn<br>monster_next_move (BFS)"]
+  monsters --> monsterState["Monster.pos / alive / drop_list"]
+  monsterState --> battle["Floor.battle_monster<br>ターン制ダメージ"]
+  battle --> player
+  battle --> drops["Monster.drop_list<br>Item.create_item -> Player.add_item"]
+  drops --> player
+  loop --> goal["Floor.check_goal<br>Player.position + Player.keys"]
+  goal -->|達成| next["GameState.next_floor<br>Player.floor_clear_keys_reset"]
+  next --> gsInit
+  player --> status["GameState.check_game_over<br>/ check_game_cleared"]
+  status --> loop
 ```
+
+## ゲーム全体フロー (mermaid)
+```mermaid
+flowchart TD
+  start([Game Start]) --> init["GameState.__init__<br>フロア抽選 / Player()"]
+  init --> opening["print_all_opening<br>+ Floor.rule 表示"]
+  opening --> loop{GameState.game_state?<br>step_turn継続}
+  loop --> step["GameState.step_turn 実行"]
+  step --> input{"入力 w/a/s/d/u/r/q"}
+  input -->|q| quit["is_game_over = True"]
+  input -->|u| potion["Player.use_potion()<br>HP=MAX"] --> statusCheck["check_game_over / cleared"]
+  input -->|r| showRule["Floor.rule 再表示"] --> statusCheck
+  input -->|w/a/s/d| moveTry["try_move_player<br>壁・範囲チェック"]
+  moveTry -->|不可| input
+  moveTry -->|成功| enterFlow["Floor.enter_cell<br>items / gimmick / teleport"]
+  enterFlow --> monsterPhase["各 Monster.increment_turn<br>monster_next_move"]
+  monsterPhase --> battle["Floor.battle_monster<br>衝突時に開始"]
+  battle --> playerState["Player.hp / inventory 更新"]
+  enterFlow --> playerState
+  playerState --> goalCheck{"Floor.check_goal"}
+  goalCheck -->|未達| statusCheck
+  goalCheck -->|達成| nextFloor["GameState.next_floor<br>start_floor + Player.reset"]
+  nextFloor --> opening
+  statusCheck -->|継続| loop
+  statusCheck -->|ゲームオーバー| endGame([Game Over])
+  goalCheck -->|全フロア完了| clear(["print_game_text(Ending)<br>ゲームクリア"])
+  quit --> endGame
+```
+
+
 
