@@ -2,13 +2,7 @@
 
 本プロジェクトは **grid（地形）をテキスト**, **オブジェクト/ギミック等は JSON** に分離した構成です。  
 
-## Progress Tracking
-
-See [TODO.md](TODO.md) for the current checklist.
-
----
-
-## ディレクトリ構成（例）
+## ディレクトリ構成
 
 ```
 .
@@ -30,18 +24,16 @@ See [TODO.md](TODO.md) for the current checklist.
 │   ├── Firstgame_ui.txt
 │   ├── Floor_rule.txt
 │   └── Opening.txt
-├── map_data
-│   ├── map01.txt
-│   ├── map01.json
-│   ├── map02.txt
-│   ├── map02.json
-│   ├── sample01.txt
-│   ├── sample01.json
-│   ├── sample06.txt
-│   ├── sample06_2.json
-│   └── ...
-├── tmp.py                    # スタンドアロン検証用
-└── tmp.ipynb                 # Jupyter ノート
+└── map_data
+    ├── map01.txt
+    ├── map01.json
+    ├── map02.txt
+    ├── map02.json
+    ├── ...
+    ├── sample01.txt
+    ├── sample01.json
+    └── ...
+
 ```
 
 ---
@@ -104,7 +96,7 @@ json=maps/map01.json
 {"id":"TR1","type":"trap","pos":[3,4],"hidden":false,"params":{"damage":10,"once":1}}
 ```
 
-* `weapon`: 取得即 `ATK += atk`
+* `weapon`: 取得即 `ATK += atk`。指定しない場合 `1~10` でランダム。
 * `potion`: インベントリに入る。`u` で使用→HP全快
 * `key`: `id` をプレイヤーが所持
 * `trap`: 踏むと `damage` ダメージ。`once=1` なら一度きり。
@@ -175,18 +167,6 @@ json=maps/map01.json
 
 ---
 
-<!-- ## 実装ポリシー（本リポの方針）
-
-* **パーサは簡素**：マップ/JSONは正しく書かれている前提。過度な防御的コードは省略。
-* **責務の集約**：描画・移動・戦闘・敵AI・ドロップ・扉/宝箱・判定は **`GameState` メソッド** に集約。
-  外側からは `render()` と `step_turn(cmd)` を呼ぶだけで進行可能。
-* **拡張しやすさ**：
-
-  * AIの追加：`monsters_act()` の分岐に追加
-  * 新アイテム：`on_step_common()` で type 分岐を追加
-  * 追加ギミック：`on_step_common()` / `_passable_*()` / `_compute_slide_path()` にフック -->
-
-
 ```
 @ ←プレイヤー
 M ←モンスター
@@ -197,7 +177,7 @@ G ←ゴール地点
 T ←テレポ台
 ```
 
-___
+---
 
 ## ゲーム要件
 - k層あるマップのうち5層クリアでゲームクリア。
@@ -222,3 +202,34 @@ ___
 	- 鍵: マップゴールに必要であったり、マップ内に存在する宝箱を開けるのに必要であったりする。
 	- 罠: プレイヤーに10のダメージを与える。即時反映される。
   - 宝箱: 特定の鍵を所持した状態のときに開けることができる。何らかのアイテムを入手することができる。
+
+---
+
+## modules ディレクトリ内ファイル概要
+- `constants.py`: フロア選択数や総フロア数、移動ベクトル`DIRECTIONS`、描画記号`TILE_SYMBOLS`、データパスなどの共通定数をまとめる。
+- `read_map_data.py`: マップの`.txt`を読み込み、`[grid]`と`[info]`を分離して`grid`と`json_path`を返すユーティリティ。
+- `floor.py`: フロア1層分のモデル。`Floor`初期化時に`read_map_data`→JSON読み込みで`Item/Monster/Door/Chest/Teleport/Gimmicks`を生成。`print_grid`で描画、`enter_cell`でアイテム・ギミック・テレポ処理、`battle_monster`でターン制戦闘とドロップ生成、`check_goal`でゴール判定を担当。
+- `game_state.py`: ゲーム全体の進行管理。フロア選択や`start_floor`で`Floor`生成、`step_turn`で入力→移動→`Floor.enter_cell`→モンスター行動→戦闘→`check_goal`を実行し、`next_floor`で進行を進める。`try_move_player`など入出力補助もここにある。
+- `items.py`: アイテム階層。`Item`を基底に`Key/Weapon/Potion/Trap/Dummy`を用意し、`create_item`ファクトリでJSON定義から適切なクラスを生成。`Weapon.apply_effect`は`Player.equip_weapon`を呼び攻撃力を上げ、`Potion`/`Trap`はHPを直接回復・減少させる。
+- `monsters.py`: `Monster`クラス。`init_status`で強さ係数からHP/攻撃力を決め、`increment_turn`で移動周期管理、`monster_next_move`で`static/random/chase/patrol`AIを切替、`bfs`で追跡経路を計算。`drop_list`は`Floor.battle_monster`経由で`Item`生成に使われる。
+- `objects.py`: マップ上の構造物とギミック。`Door`/`Chest`/`Teleport`は位置と鍵条件を保持し、`Teleport.get_destination`がプレイヤー位置を転送。`Gimmicks`は氷床・地形ダメージ領域を管理し、`ice_gimmick_effect`で連続滑走と訪問セル追加、`apply_terrain_damage`で`Player.hp`を減少させる。
+- `player.py`: `Player`クラス。位置・HP・攻撃力・所持品を管理し、`add_item`でインベントリ格納、`use_potion`で全回復、`equip_weapon`で最良武器を装備し攻撃力を再計算、`floor_clear_keys_reset`でフロア跨ぎの鍵をリセットする。
+
+## クラス間の主な影響関係 (mermaid)
+```mermaid
+flowchart TB
+  main["main.py\nGameState() 実行"] --> gsStep["GameState.step_turn"]
+  gsStep -->|入力/位置更新| move["try_move_player\n-> Player.position"]
+  gsStep --> enter["Floor.enter_cell\nアイテム/ギミック/テレポ処理"]
+  enter -->|拾う/即時効果| itemEff["Item.apply_effect\n-> Player.hp/attack\n+ Player.add_item"]
+  enter -->|氷/地形ダメージ| gimmickEff["Gimmicks.ice_gimmick_effect / apply_terrain_damage\n-> Player.position/hp"]
+  enter -->|転送| tpEff["Teleport.get_destination\n-> Player.position"]
+  gsStep --> monMove["Monster.monster_next_move\n(DIRECTIONS/BFS)"]
+  monMove --> monPos["Monster.pos 更新"]
+  gsStep --> battle["Floor.battle_monster\nターン制ダメージ"]
+  battle --> hpDown["Player.hp 減少"]
+  battle --> drops["Monster.drop_list\nItem.create_item ->\nPlayer.add_item/apply_effect"]
+  gsStep --> goal["Floor.check_goal\nPlayer.position & keys 判定"]
+  goal -->|成功| next["GameState.next_floor\nFloor 再生成\nPlayer.floor_clear_keys_reset"]
+```
+

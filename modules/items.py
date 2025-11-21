@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+import random
 if TYPE_CHECKING: 
     from modules.player import Player
 
@@ -39,7 +40,7 @@ class Weapon(Item):
     DEFAULT_ATTACK = 10
     def apply_effect(self, player: 'Player') -> None:
         """ プレイヤーに装備効果を適用する """
-        attack_bonus = self.params.get('atk', self.DEFAULT_ATTACK)
+        attack_bonus = self.params.get('atk', random.randint(1, self.DEFAULT_ATTACK))
         player.equip_weapon(self, attack_bonus)
 
     def __repr__(self):
