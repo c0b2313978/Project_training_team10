@@ -159,7 +159,7 @@ class GameState:
             if not self.is_game_cleared:
                 self.floor = self.start_floor()
                 self.player.position = self.floor.start
-                self.player.attack = Player.BASE_ATK
+                self.player.recalculate_attack()
                 print() #マップごとのルール説明
                 print(self.floor.rule)
                 print("\n")

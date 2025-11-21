@@ -19,5 +19,5 @@ def tmp():
 
 
 if __name__ == "__main__":
-    #main()
-    tmp()
+    main()
+    # tmp()

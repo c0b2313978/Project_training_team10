@@ -6,9 +6,12 @@ class Player:
     MAX_HP = 100
     BASE_ATK = 10
     def __init__(self, start_pos: tuple[int, int]) -> None:
-        self.hp = Player.MAX_HP
-        self.attack = Player.BASE_ATK
         self.position = start_pos  # (row, col)
+
+        self.hp = Player.MAX_HP
+        self.equipped_weapon_attack = 0  # 装備武器の攻撃力
+        self.equipped_weapon_id: str | None = None
+        self.recalculate_attack()
 
         self.inventory: dict[str, Item] = {}  # id -> Item
         self.keys: set[str] = set()  # 所持しているキーID集合
@@ -16,7 +19,7 @@ class Player:
         
         self.last_move_direction: str | None = None  # 最後に移動した方向 ('w', 'a', 's', 'd')
         # self.visited_cells = set()  # 訪問済みセル集合
-    
+        
     # ====== ステータス表示 ======
     def print_status(self) -> None:
         """ プレイヤーステータスを表示する """
@@ -36,6 +39,11 @@ class Player:
             
             if self.keys:  # キーid一覧を表示 だったやつをアイコンの個数で表現するようにした
                 print(f"\tKeys: {'🔑' * len(self.keys)}")
+        
+        if self.equipped_weapon_id:
+            print(f"\tWeapon: {self.equipped_weapon_id} (+{self.equipped_weapon_attack})")
+        else:
+            print("\tWeapon: None")
 
     def add_item(self, item: Item) -> None:
         """ アイテムをインベントリに追加する """
@@ -70,6 +78,21 @@ class Player:
         # インベントリから削除
         del self.inventory[potion_id]
         return True
+    
+    def recalculate_attack(self) -> None:
+        """ 基礎攻撃力と装備ボーナスで攻撃力を更新 """
+        self.attack = Player.BASE_ATK + self.equipped_weapon_attack
+
+    def equip_weapon(self, weapon: Item, attack_bonus: int) -> None:
+        """ 武器は1本のみ装備し、強い方へ自動で持ち替える """
+        if attack_bonus <= self.equipped_weapon_attack:
+            print(f"{weapon.id} を拾ったが、すでに装備中の武器の方が強い。")
+            return
+
+        self.equipped_weapon_id = weapon.id
+        self.equipped_weapon_attack = attack_bonus
+        self.recalculate_attack()
+        print(f"{weapon.id} に持ち替えた。攻撃力は {self.attack} になった。")
     
     def item_organizing(self) -> None:
         """ インベントリ内のアイテムを整理する（種類ごとにまとめるなど）, inventoryの内容が変更された場合に呼び出す """

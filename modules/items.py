@@ -39,8 +39,8 @@ class Weapon(Item):
     DEFAULT_ATTACK = 10
     def apply_effect(self, player: 'Player') -> None:
         """ プレイヤーに装備効果を適用する """
-        player.attack += self.params.get('atk', self.DEFAULT_ATTACK)  # 攻撃力ボーナス（仮）
-        print(f"武器を装備しました！ 攻撃力が {self.params.get('atk', self.DEFAULT_ATTACK)} 上昇しました。")
+        attack_bonus = self.params.get('atk', self.DEFAULT_ATTACK)
+        player.equip_weapon(self, attack_bonus)
 
     def __repr__(self):
         return f"Weapon(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
