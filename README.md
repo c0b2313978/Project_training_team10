@@ -273,5 +273,334 @@ flowchart TD
   quit --> endGame
 ```
 
+## クラス別メンバーと矢印対応 (mermaid)
+メソッドとインスタンス変数を個別ノード化し、主な作用先を矢印で表現しています。各クラスは色分けしています。
+
+```mermaid
+graph LR
+  %% GameState
+  subgraph GameState
+    GS_is["var is_game_state"]
+    GS_req["var requires_map_file_path"]
+    GS_floors["var all_floors"]
+    GS_clear["var cleared_count"]
+    GS_idx["var current_floor_index"]
+    GS_over["var is_game_over"]
+    GS_cleared["var is_game_cleared"]
+    GS_floor["var floor (Floor)"]
+    GS_player["var player (Player)"]
+    GS_init["method __init__"]
+    GS_game["method game_state"]
+    GS_start["method start_floor"]
+    GS_next["method next_floor"]
+    GS_chk_over["method check_game_over"]
+    GS_chk_clear["method check_game_cleared"]
+    GS_read["method read_command"]
+    GS_step["method step_turn"]
+  end
+
+  %% Floor
+  subgraph Floor
+    FL_id["var floor_id"]
+    FL_grid["var grid"]
+    FL_json["var json_path"]
+    FL_map["var map_size"]
+    FL_move["var movable_cells"]
+    FL_info["var info"]
+    FL_name["var name"]
+    FL_reveal["var reveal_hidden"]
+    FL_start["var start"]
+    FL_goal_type["var goal.type"]
+    FL_goal_pos["var goal.pos"]
+    FL_goal_keys["var goal.keys"]
+    FL_items["var items dict"]
+    FL_monsters["var monsters dict"]
+    FL_doors["var doors dict"]
+    FL_chests["var chests dict"]
+    FL_tp["var teleports dict"]
+    FL_gimmicks["var gimmicks"]
+    FL_rule["var rule"]
+    FL_ctor["method __init__"]
+    FL_read["method _read_json_data"]
+    FL_goal_init["method _goal_init"]
+    FL_items_init["method _items_init"]
+    FL_mons_init["method _monsters_init"]
+    FL_doors_init["method _doors_init"]
+    FL_chests_init["method _chests_init"]
+    FL_tp_init["method _teleports_init"]
+    FL_gimmicks_init["method _gimmicks_init"]
+    FL_rule_init["method _rules_init"]
+    FL_print_info["method print_info"]
+    FL_collect["method _collect_entity_symbols"]
+    FL_print["method print_grid"]
+    FL_handle["method _handle_cell_items"]
+    FL_enter["method enter_cell"]
+    FL_battle["method battle_monster"]
+    FL_goal_chk["method check_goal"]
+  end
+
+  %% Player
+  subgraph Player
+    PL_pos["var position"]
+    PL_hp["var hp"]
+    PL_attack["var attack"]
+    PL_eq_id["var equipped_weapon_id"]
+    PL_eq_atk["var equipped_weapon_attack"]
+    PL_inv["var inventory dict"]
+    PL_keys["var keys set"]
+    PL_pots["var potions set"]
+    PL_last["var last_move_direction"]
+    PL_print["method print_status"]
+    PL_inv_print["method print_inventory"]
+    PL_add["method add_item"]
+    PL_reset_keys["method floor_clear_keys_reset"]
+    PL_use["method use_potion"]
+    PL_recalc["method recalculate_attack"]
+    PL_equip["method equip_weapon"]
+    PL_org["method item_organizing"]
+  end
+
+  %% Monster
+  subgraph Monster
+    MON_id["var id"]
+    MON_pos["var pos"]
+    MON_next_pos["var next_pos"]
+    MON_ai["var ai_type"]
+    MON_ai_param["var ai_params"]
+    MON_move_every["var move_every"]
+    MON_turn["var turn_counter"]
+    MON_drop["var drop_list"]
+    MON_strength["var strength"]
+    MON_alive["var alive"]
+    MON_hp["var hp"]
+    MON_attack["var attack"]
+    MON_patrol_points["var patrol_points"]
+    MON_patrol_idx["var patrol_point"]
+    MON_debug["var debug_path"]
+    MON_ctor["method __init__"]
+    MON_status["method init_status"]
+    MON_incr["method increment_turn"]
+    MON_reset["method reset_turn_counter"]
+    MON_move["method monster_next_move"]
+    MON_bfs["method bfs"]
+  end
+
+  %% Items (generic + subclasses)
+  subgraph Items
+    IT_id["var id"]
+    IT_type["var type"]
+    IT_pos["var pos"]
+    IT_hidden["var hidden"]
+    IT_params["var params"]
+    IT_picked["var picked"]
+    IT_create["method create_item"]
+    IT_apply["method Item.apply_effect"]
+    KEY_apply["method Key.apply_effect"]
+    WPN_apply["method Weapon.apply_effect"]
+    POT_apply["method Potion.apply_effect"]
+    TRP_apply["method Trap.apply_effect"]
+    DMY_apply["method Dummy.apply_effect"]
+  end
+
+  %% Objects / Gimmicks
+  subgraph Objects
+    DR_id["var Door.id"]
+    DR_pos["var Door.pos"]
+    DR_req["var Door.requires_key"]
+    DR_open["var Door.opened"]
+    CH_id["var Chest.id"]
+    CH_pos["var Chest.pos"]
+    CH_req["var Chest.requires_key"]
+    CH_cont["var Chest.contents"]
+    CH_open["var Chest.opened"]
+    TP_id["var Teleport.id"]
+    TP_src["var Teleport.source"]
+    TP_tgt["var Teleport.target"]
+    TP_req["var Teleport.requires_key"]
+    TP_bi["var Teleport.bidirectional"]
+    GM_grid["var Gimmicks.grid"]
+    GM_cells["var Gimmicks.moveable_cells"]
+    GM_params["var Gimmicks.params"]
+    GM_ice["var ice_regions"]
+    GM_terrain["var terrain_damage_regions"]
+    GM_damage["var terrain_damage"]
+    CH_return["method Chest.return_contents"]
+    TP_dest["method Teleport.get_destination"]
+    GM_norm["method Gimmicks._normalize_region_list"]
+    GM_is["method is_gimmick_cell / is_ice_cell"]
+    GM_ice_eff["method ice_gimmick_effect"]
+    GM_terrain_val["method terrain_damage_value"]
+    GM_apply_damage["method apply_terrain_damage"]
+  end
+
+  %% Edge definitions (GameState)
+  GS_init --> GS_req
+  GS_init --> GS_floors
+  GS_init --> GS_floor
+  GS_init --> GS_player
+  GS_init --> GS_clear
+  GS_init --> GS_idx
+  GS_init --> GS_is
+  GS_game --> GS_is
+  GS_start --> GS_floor
+  GS_start --> FL_ctor
+  GS_next --> GS_clear
+  GS_next --> GS_idx
+  GS_next --> GS_cleared
+  GS_next --> PL_reset_keys
+  GS_chk_over --> GS_over
+  GS_chk_over --> PL_hp
+  GS_chk_clear --> GS_cleared
+  GS_step --> PL_pos
+  GS_step --> PL_last
+  GS_step --> FL_print
+  GS_step --> FL_enter
+  GS_step --> MON_incr
+  GS_step --> MON_move
+  GS_step --> FL_battle
+  GS_step --> FL_goal_chk
+  GS_step --> GS_next
+  GS_step --> GS_chk_over
+  GS_step --> GS_chk_clear
+
+  %% Floor edges
+  FL_ctor --> FL_id
+  FL_ctor --> FL_grid
+  FL_ctor --> FL_json
+  FL_ctor --> FL_map
+  FL_ctor --> FL_move
+  FL_ctor --> FL_info
+  FL_ctor --> FL_name
+  FL_ctor --> FL_reveal
+  FL_ctor --> FL_start
+  FL_ctor --> FL_rule
+  FL_ctor --> FL_goal_init
+  FL_ctor --> FL_items_init
+  FL_ctor --> FL_mons_init
+  FL_ctor --> FL_doors_init
+  FL_ctor --> FL_chests_init
+  FL_ctor --> FL_tp_init
+  FL_ctor --> FL_gimmicks_init
+  FL_goal_init --> FL_goal_type
+  FL_goal_init --> FL_goal_pos
+  FL_goal_init --> FL_goal_keys
+  FL_items_init --> FL_items
+  FL_mons_init --> FL_monsters
+  FL_doors_init --> FL_doors
+  FL_chests_init --> FL_chests
+  FL_tp_init --> FL_tp
+  FL_gimmicks_init --> FL_gimmicks
+  FL_rule_init --> FL_rule
+  FL_handle --> FL_items
+  FL_handle --> IT_picked
+  FL_handle --> IT_apply
+  FL_handle --> PL_inv
+  FL_handle --> PL_keys
+  FL_handle --> PL_pots
+  FL_enter --> FL_handle
+  FL_enter --> GM_ice_eff
+  FL_enter --> GM_apply_damage
+  FL_enter --> TP_dest
+  FL_enter --> PL_pos
+  FL_enter --> PL_hp
+  FL_battle --> MON_hp
+  FL_battle --> MON_alive
+  FL_battle --> MON_drop
+  FL_battle --> PL_hp
+  FL_battle --> PL_inv
+  FL_battle --> IT_create
+  FL_battle --> IT_apply
+  FL_goal_chk --> FL_goal_pos
+  FL_goal_chk --> FL_goal_keys
+  FL_goal_chk --> PL_pos
+  FL_goal_chk --> PL_inv
+
+  %% Player edges
+  PL_print --> PL_hp
+  PL_print --> PL_attack
+  PL_inv_print --> PL_inv
+  PL_add --> PL_inv
+  PL_add --> PL_keys
+  PL_add --> PL_pots
+  PL_reset_keys --> PL_keys
+  PL_reset_keys --> PL_inv
+  PL_use --> PL_pots
+  PL_use --> PL_inv
+  PL_use --> PL_hp
+  PL_recalc --> PL_attack
+  PL_equip --> PL_eq_id
+  PL_equip --> PL_eq_atk
+  PL_equip --> PL_attack
+  PL_org --> PL_inv
+
+  %% Monster edges
+  MON_ctor --> MON_id
+  MON_ctor --> MON_pos
+  MON_ctor --> MON_ai
+  MON_ctor --> MON_ai_param
+  MON_ctor --> MON_move_every
+  MON_ctor --> MON_drop
+  MON_ctor --> MON_strength
+  MON_ctor --> MON_status
+  MON_status --> MON_hp
+  MON_status --> MON_attack
+  MON_status --> MON_patrol_points
+  MON_status --> MON_patrol_idx
+  MON_incr --> MON_turn
+  MON_reset --> MON_turn
+  MON_move --> MON_pos
+  MON_move --> MON_next_pos
+  MON_bfs --> MON_debug
+
+  %% Item edges
+  IT_create --> IT_id
+  IT_create --> IT_type
+  IT_create --> IT_pos
+  IT_create --> IT_hidden
+  IT_create --> IT_params
+  WPN_apply --> PL_equip
+  POT_apply --> PL_hp
+  TRP_apply --> PL_hp
+  KEY_apply --> PL_keys
+  IT_apply --> PL_inv
+
+  %% Object edges
+  CH_return --> IT_create
+  TP_dest --> PL_pos
+  GM_ice_eff --> PL_pos
+  GM_apply_damage --> PL_hp
+  GM_norm --> GM_ice
+  GM_norm --> GM_terrain
+
+  %% Cross links
+  GS_floor --> FL_ctor
+  GS_player --> PL_pos
+  GS_next --> GS_floor
+  GS_next --> GS_player
+  FL_monsters --> MON_ctor
+  FL_items --> IT_create
+  FL_tp --> TP_dest
+  FL_gimmicks --> GM_ice_eff
+  FL_gimmicks --> GM_apply_damage
+  PL_attack --> MON_hp
+  MON_attack --> PL_hp
+
+  classDef gamestate fill:#fde4ec,stroke:#c2185b,color:#000;
+  classDef floor fill:#fff8e1,stroke:#ff6f00,color:#000;
+  classDef player fill:#e3f2fd,stroke:#1565c0,color:#000;
+  classDef monster fill:#ede7f6,stroke:#5e35b1,color:#000;
+  classDef items fill:#f1f8e9,stroke:#558b2f,color:#000;
+  classDef objects fill:#fbe9e7,stroke:#e64a19,color:#000;
+
+  class GS_is,GS_req,GS_floors,GS_clear,GS_idx,GS_over,GS_cleared,GS_floor,GS_player,GS_init,GS_game,GS_start,GS_next,GS_chk_over,GS_chk_clear,GS_read,GS_step gamestate;
+  class FL_id,FL_grid,FL_json,FL_map,FL_move,FL_info,FL_name,FL_reveal,FL_start,FL_goal_type,FL_goal_pos,FL_goal_keys,FL_items,FL_monsters,FL_doors,FL_chests,FL_tp,FL_gimmicks,FL_rule,FL_ctor,FL_read,FL_goal_init,FL_items_init,FL_mons_init,FL_doors_init,FL_chests_init,FL_tp_init,FL_gimmicks_init,FL_rule_init,FL_print_info,FL_collect,FL_print,FL_handle,FL_enter,FL_battle,FL_goal_chk floor;
+  class PL_pos,PL_hp,PL_attack,PL_eq_id,PL_eq_atk,PL_inv,PL_keys,PL_pots,PL_last,PL_print,PL_inv_print,PL_add,PL_reset_keys,PL_use,PL_recalc,PL_equip,PL_org player;
+  class MON_id,MON_pos,MON_next_pos,MON_ai,MON_ai_param,MON_move_every,MON_turn,MON_drop,MON_strength,MON_alive,MON_hp,MON_attack,MON_patrol_points,MON_patrol_idx,MON_debug,MON_ctor,MON_status,MON_incr,MON_reset,MON_move,MON_bfs monster;
+  class IT_id,IT_type,IT_pos,IT_hidden,IT_params,IT_picked,IT_create,IT_apply,KEY_apply,WPN_apply,POT_apply,TRP_apply,DMY_apply items;
+  class DR_id,DR_pos,DR_req,DR_open,CH_id,CH_pos,CH_req,CH_cont,CH_open,TP_id,TP_src,TP_tgt,TP_req,TP_bi,GM_grid,GM_cells,GM_params,GM_ice,GM_terrain,GM_damage,CH_return,TP_dest,GM_norm,GM_is,GM_ice_eff,GM_terrain_val,GM_apply_damage objects;
+```
+
+矢印は「左ノードのメソッドが右ノードの変数や他メソッドに作用する」ことを示します。色は GameState=ピンク、Floor=黄、Player=水色、Monster=紫、Items=緑、Objects/Gimmicks=オレンジです。
+
 
 
