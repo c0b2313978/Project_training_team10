@@ -1,14 +1,10 @@
 {
     "name": "map00",
     "reveal_hidden": true,
-    "start": [3, 1],
+    "start": [6, 5],
     "goal": {
         "type": "reach",
-        "pos": [9, 5]
+        "pos": [1, 5]
     },
-    "teleports": [
-        {"id": "teleport01", "source": [3, 9], "target": [6, 9], "bidirectional": true},
-        {"id": "teleport02", "source": [7, 1], "target": [9, 1], "bidirectional": true}
-    ],
     "rule": "秘宝？"
 }

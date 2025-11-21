@@ -18,8 +18,9 @@
         {"id": "monster_01", "pos": [5, 2],  "ai_type": "static", "drop_list": [], "strength": "strong"},
         {"id": "monster_02", "pos": [5, 7],  "ai_type": "static", "drop_list": [], "strength": "strong"},
         {"id": "monster_03", "pos": [5, 8],  "ai_type": "static", "drop_list": [], "strength": "strong"},
-        {"id": "monster_04", "pos": [7, 2],  "ai_type": "static", "drop_list": [], "strength": "strong"},
-        {"id": "monster_05", "pos": [5, 11], "ai_type": "static", "drop_list": [], "strength": "strong"}
+        {"id": "monster_04", "pos": [7, 2],  "ai_type": "static", "drop_list": [], "strength": "normal"},
+        {"id": "monster_05", "pos": [5, 11], "ai_type": "static", "drop_list": [], "strength": "strong"},
+        {"id": "monster_06", "pos": [2, 7], "ai_type": "chase", "ai_params": {"range": 1}, "move_every": 1,  "drop_list": [], "strength": "weak"}
     ],
     "teleports": [
         {"id": "teleport01", "source": [7, 4], "target": [1, 9], "bidirectional": true}

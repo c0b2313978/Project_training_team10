@@ -11,8 +11,8 @@
     },
 
     "items": [
-        {"id": "W1", "type": "weapon", "pos": [1,2], "hidden": false, "params": {"atk": 5}},
         {"id": "P1", "type": "potion", "pos": [1,10], "hidden": true,  "params": {}},
+        {"id": "P1", "type": "potion", "pos": [10,14], "hidden": false,  "params": {}},
         {"id": "gold", "type": "key", "pos": [4,5], "hidden": false, "params": {"key_id": "gold"}}
     ],
     
