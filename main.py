@@ -3,13 +3,13 @@ import os
 
 from modules.game_state import GameState
 from modules.constants import TEXT_DIR_PATH, sample_map_data
-from modules.self_made_AI import RandomAI
-from modules.self_made_AI_2 import ModeBasedAI
+from modules.self_made_AI import RandomAI, ModeBasedAI
 
 # Main ループ
 def main(auto_play=False):
     game_state = GameState()
-    agent = ModeBasedAI() if auto_play else None
+    agent = ModeBasedAI()
+    
     while game_state.game_state():
         command = ""
         if auto_play:
@@ -21,10 +21,10 @@ def main(auto_play=False):
 full_maps = [f"map_data/map{file_name:02d}.txt" for file_name in range(1, 9)]
 
 def tmp(auto_play=False):
-    # game_state = GameState(requires_map_file_path=full_maps)  # デバッグ用：特定フロア指定
-    game_state = GameState(requires_map_file_path=["map_data/map07.txt"])  # デバッグ用：特定フロア指定
-    # game_state = GameState()
-    agent = ModeBasedAI(game_state = game_state) if auto_play else None
+    game_state = GameState(requires_map_file_path=full_maps)  # デバッグ用：特定フロア指定
+    # game_state = GameState(requires_map_file_path=["map_data/map01.txt"])  # デバッグ用：特定フロア指定
+    agent = ModeBasedAI(game_state = game_state)
+    
     while game_state.game_state():
         command = ""
         if auto_play:
