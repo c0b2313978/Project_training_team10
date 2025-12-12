@@ -51,13 +51,13 @@ class Teleport:
         return f"Teleport(id={self.id}, source={self.source}, target={self.target}, requires_key={self.requires_key}, bidirectional={self.bidirectional})"
     
     # ===== from_pos から見た destination を返す =====
-    def get_destination(self, from_pos: tuple[int, int]) -> tuple[int, int] | None:
+    def get_destination(self, from_pos: tuple[int, int]) -> tuple[int, int]:
         if from_pos == self.source:
             return self.target
         elif self.bidirectional and from_pos == self.target:  # 双方向テレポートの場合
             return self.source
         else:
-            return None
+            return from_pos
 
 # ==================== ギミック全体クラス ====================
 class Gimmicks:

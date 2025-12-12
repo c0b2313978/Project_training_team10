@@ -173,6 +173,14 @@ class GameState:
         self.check_game_over()
         self.check_game_cleared()
     
+    def get_legal_actions(self) -> list[str]:
+        actions = [d for d in ['w','a','s','d'] if try_move_player(self.player, d, self.floor.grid)]
+        if self.player.potions:
+            actions.append('u')
+        
+        if actions == []:
+            raise Exception("???????? 行動可能な手が存在しない")
+        return actions
 
 # ==================== 便利関数群 ====================
 
