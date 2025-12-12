@@ -181,6 +181,63 @@ class GameState:
         if actions == []:
             raise Exception("???????? 行動可能な手が存在しない")
         return actions
+    
+    def get_known_info(self) -> tuple[dict, list[str]]:
+        """ 現在のゲーム状態のうち，AI(プレイヤー)が知りうる情報 """
+
+        # floor情報 
+        visible_items = [
+            {"id": item.id, "pos": item.pos, "type": item.type} 
+            for item in self.floor.items.values() 
+            if not item.picked and not item.hidden
+        ]
+        revealed_hidden_items = [
+            item.pos
+            for item in self.floor.items.values()
+            if item.hidden and not item.picked and self.floor.reveal_hidden
+        ]
+        visible_monsters = [
+            {"id": monster.id, "pos": monster.pos, "strength": monster.strength}
+            for monster in self.floor.monsters.values()
+            if monster.alive
+        ]
+        doors = [{"pos": door.pos, "opened": door.opened} for door in self.floor.doors.values()]
+        chests = [{"pos": chest.pos, "opened": chest.opened} for chest in self.floor.chests.values()]
+        teleports = [{"source": tp.source, "bidirectional": tp.bidirectional} for tp in self.floor.teleports.values()]
+        goal_positions = list(self.floor.goal.get("pos", []))
+
+        gimmicks_info = []
+        gimmicks = self.floor.gimmicks  
+        if gimmicks:
+            if gimmicks.is_ice:
+                gimmicks_info.append({"type": "ice", "positions": list(gimmicks.ice_regions)})
+            if gimmicks.is_terrain_damage:
+                gimmicks_info.append({"type": "terrain_damage", "positions": list(gimmicks.terrain_damage_regions)})
+
+
+        info = {
+            'player': {
+                'position': self.player.position,
+                'hp': self.player.hp,
+                'attack': self.player.attack,
+                'keys': list(self.player.keys),
+                'potions': list(self.player.potions),
+                'equipped_weapon_id': self.player.equipped_weapon_id,
+                'equipped_weapon_attack': self.player.equipped_weapon_attack,
+            },
+            'floor': {
+                'grid': self.floor.grid,
+                'visible_items': visible_items,
+                'hidden_items': revealed_hidden_items,  # 隠しアイテムのうち，?で表示されるもの． 位置のみわかる
+                'monsters': visible_monsters,
+                'gimmicks': gimmicks_info,
+                'doors': doors,
+                'chests': chests,
+                'teleports': teleports,
+                'goal': goal_positions,  # ゴールの位置しかわからない． 必要な鍵などは不明
+            }
+        }
+        return info, self.get_legal_actions()
 
 # ==================== 便利関数群 ====================
 
