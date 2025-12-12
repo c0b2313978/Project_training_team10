@@ -203,7 +203,7 @@ class GameState:
         ]
         doors = [{"pos": door.pos, "opened": door.opened} for door in self.floor.doors.values()]
         chests = [{"pos": chest.pos, "opened": chest.opened} for chest in self.floor.chests.values()]
-        teleports = [{"source": tp.source, "bidirectional": tp.bidirectional} for tp in self.floor.teleports.values()]
+        teleports = set(sum([[teleport.source, teleport.target] if teleport.bidirectional else [teleport.source] for teleport in self.floor.teleports.values()], []))
         goal_positions = list(self.floor.goal.get("pos", []))
 
         gimmicks_info = []
