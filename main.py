@@ -13,7 +13,8 @@ def main(auto_play=False):
     while game_state.game_state():
         command = ""
         if auto_play:
-            command = agent.decide_move(game_state)
+            info, legal_actions = game_state.get_known_info()
+            command = agent.decide_move(info, legal_actions)
         input()  # 一時停止（手動操作時用）
         game_state.step_turn(command)
 
@@ -28,7 +29,8 @@ def tmp(auto_play=False):
     while game_state.game_state():
         command = ""
         if auto_play:
-            command = agent.decide_move(game_state)
+            info, legal_actions = game_state.get_known_info()
+            command = agent.decide_move(info, legal_actions)
         input()  # 一時停止（手動操作時用）
         game_state.step_turn(command)
 

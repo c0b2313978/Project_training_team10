@@ -46,14 +46,18 @@ class ModeBasedAI:
                     self.ice_regions.update({tuple(pos) for pos in gimmick['positions']})
 
 
-    def decide_move(self, game_state: GameState) -> str:
+    def decide_move(self, info: dict, legal_actions: list[str]) -> str:
+        """
+        次の移動方向を決定する
+        info, legal_actions は GameState.get_known_info() から取得したもの
+        return: 'w'|'a'|'s'|'d'|'u'
+        """
         # 情報取得
-        info, legal_actions = game_state.get_known_info()
         player_pos = info['player']['position']
         floor_info = info['floor']
 
         # モード決定
-        self.mode = self.decide_mode(game_state)
+        self.mode = self.decide_mode(info)
         print(f"[ModeBasedAI] Current mode: {self.mode}")
 
         if self.mode == "USE_POTION":
@@ -94,8 +98,7 @@ class ModeBasedAI:
 
         return best_move
     
-    def decide_mode(self, game_state: GameState) -> str:
-        info, _ = game_state.get_known_info()
+    def decide_mode(self, info) -> str:
         player_info = info['player']
         floor_info = info['floor']
         
@@ -202,9 +205,6 @@ class ModeBasedAI:
         最初の一歩の方向('w', 'a', 's', 'd')を返す
         """
         grid = info['floor']['grid']
-        rows = len(grid)
-        cols = len(grid[0])
-        
         
         # 優先度付きキュー: (累積コスト, 現在座標, 最初の一歩の方向)
         pq = [(0, start_pos, "")]
