@@ -3,8 +3,7 @@ import heapq
 import math
 from modules.floor import Floor
 from modules.game_state import GameState
-from modules.player import Player
-from modules.items import Item, Weapon, Potion, Key, Trap
+from modules.constants import DIRECTIONS
 
 class RandomAI:
     def __init__(self, name="RandomAI"):
@@ -27,21 +26,35 @@ class ModeBasedAI:
         self.name = name
         self.mode = "WEAPON_SEARCH"
 
-        self.not_enough_keys_counter = 0  # 鍵不足でゴールに到達できなかった回数
-        self.required_keys_for_goal = set()  # ゴールに到達するために必要な鍵．ゴールに到達時に更新される．フロアクリアでリセット．
+        # self.not_enough_keys_counter = 0  # 鍵不足でゴールに到達できなかった回数
+        # self.required_keys_for_goal = set()  # ゴールに到達するために必要な鍵．ゴールに到達時に更新される．フロアクリアでリセット．
+
+        self.info_by_experience = {}  # 移動履歴に基づく情報辞書
+        self.teleport_map = {}  # {source_pos: target_pos}
+        self.known_teleport_cells = set()
+
+        self.ice_regions = set()  # 氷セル集合
+
 
         print("[ModeBasedAI] Initialized")
         if game_state:
-            print(game_state.get_known_info())
+            info, _ = game_state.get_known_info()
+            print(info)
+
+            for gimmick in info['floor']['gimmicks']:
+                if gimmick['type'] == 'ice':
+                    self.ice_regions.update({tuple(pos) for pos in gimmick['positions']})
 
 
     def decide_move(self, game_state: GameState) -> str:
-        self.mode = self.decide_mode(game_state)
-        print(f"[ModeBasedAI] Current mode: {self.mode}")
-
+        # 情報取得
         info, legal_actions = game_state.get_known_info()
         player_pos = info['player']['position']
         floor_info = info['floor']
+
+        # モード決定
+        self.mode = self.decide_mode(game_state)
+        print(f"[ModeBasedAI] Current mode: {self.mode}")
 
         if self.mode == "USE_POTION":
             return 'u'
@@ -182,18 +195,16 @@ class ModeBasedAI:
                 
         return total_cost
 
-    # --- ダイクストラ法 ---
+    # 経路探索
     def dijkstra(self, start_pos: tuple[int, int], targets: set[tuple[int, int]], info: dict) -> str:
         """
         ダイクストラ法を用いてターゲットまでの最短（最小コスト）経路を探索する。
-        最初の一歩の方向('w', 'a', 's', 'd')を返す。
+        最初の一歩の方向('w', 'a', 's', 'd')を返す
         """
         grid = info['floor']['grid']
         rows = len(grid)
         cols = len(grid[0])
         
-        # 閉じたドアの座標を取得
-        closed_doors = {tuple(d['pos']) for d in info['floor']['doors'] if not d['opened']}
         
         # 優先度付きキュー: (累積コスト, 現在座標, 最初の一歩の方向)
         pq = [(0, start_pos, "")]
@@ -220,25 +231,8 @@ class ModeBasedAI:
                 return first_move
             
             # 隣接ノード探索
-            row, col = current_pos
-            for move_dir, (dr, dc) in directions.items():
-                new_row, new_col = row + dr, col + dc
-                next_pos = (new_row, new_col)
-                
-                # マップ範囲外チェック
-                if not (0 <= new_row < rows and 0 <= new_col < cols):
-                    continue
-                
-                # 壁チェック
-                if grid[new_row][new_col] != '.':
-                    continue
-                
-                # 閉じたドアチェック
-                if next_pos in closed_doors:
-                    continue
-
-                # 移動先セルのコスト計算
-                step_cost = self.calculate_step_cost(next_pos, info)
+            for move_dir in directions:
+                next_pos, step_cost = self.simulate_move(current_pos, move_dir, info)
                 
                 # 通行不可（勝ち目のないモンスターなど）の場合はスキップ
                 if step_cost == self.INF:
@@ -253,3 +247,74 @@ class ModeBasedAI:
                     heapq.heappush(pq, (new_cost, next_pos, next_first_move))
 
         return ""  # 経路が見つからない場合
+    
+    def simulate_move(self, start_pos: tuple[int, int], move_dir_char: str, info: dict) -> tuple[tuple[int, int], int]:
+        """
+        ある位置からある方向へ移動した際の結果をシミュレーションする。 iceによる滑りと，teleportによる移動を考慮．
+        return: 到達座標, 移動コスト
+        """
+        dr, dc = DIRECTIONS[move_dir_char]
+        grid = info['floor']['grid']
+        rows, cols = len(grid), len(grid[0])
+
+        next_r, next_c = start_pos[0] + dr, start_pos[1] + dc
+        
+        # 壁判定
+        if not (0 <= next_r < rows and 0 <= next_c < cols) or grid[next_r][next_c] != '.':
+            return start_pos, self.INF
+
+        # 閉じたドア判定
+        closed_doors = {tuple(d['pos']) for d in info['floor']['doors'] if not d['opened']}
+        if (next_r, next_c) in closed_doors:
+            return start_pos, self.INF
+
+        current_pos = (next_r, next_c)
+        total_cost = self.calculate_step_cost(current_pos, info)  # 1歩目のコスト
+
+
+        path_positions = [current_pos] # 通過した座標（Iceスライド用）
+
+        # Ice ギミック 
+        ice_regions = set()
+        for gimmick in info['floor']['gimmicks']:
+            if gimmick['type'] == 'ice':
+                ice_regions.update({tuple(pos) for pos in gimmick['positions']})
+            elif gimmick['type'] == 'terrain_damage':
+                continue  # 地形ダメージはすでにコスト計算に反映済み
+        
+        if current_pos in ice_regions:
+            while True:
+                slide_r = current_pos[0] + dr
+                slide_c = current_pos[1] + dc
+
+                # 滑り先の壁・範囲外チェック
+                if not (0 <= slide_r < rows and 0 <= slide_c < cols):
+                    break # 壁で停止
+                if grid[slide_r][slide_c] != '.':
+                    break # 壁で停止
+                if (slide_r, slide_c) in closed_doors:
+                    break # ドアで停止
+
+                # 次のマスが有効なので移動
+                current_pos = (slide_r, slide_c)
+
+                # 滑り中のコスト加算
+                step_cost = self.calculate_step_cost(current_pos, info)
+                total_cost += step_cost
+                path_positions.append(current_pos)
+
+                if current_pos not in ice_regions:
+                    break  # 氷以外のセルに到達したら停止
+        
+        # Teleport ギミック
+        if current_pos in self.teleport_map:
+            target_pos = self.teleport_map[current_pos]
+            current_pos = target_pos
+            total_cost += self.calculate_step_cost(current_pos, info)
+        
+        return current_pos, total_cost
+
+
+
+
+

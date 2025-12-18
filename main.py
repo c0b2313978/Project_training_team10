@@ -21,8 +21,8 @@ def main(auto_play=False):
 full_maps = [f"map_data/map{file_name:02d}.txt" for file_name in range(1, 9)]
 
 def tmp(auto_play=False):
-    game_state = GameState(requires_map_file_path=full_maps)  # デバッグ用：特定フロア指定
-    # game_state = GameState(requires_map_file_path=["map_data/map01.txt"])  # デバッグ用：特定フロア指定
+    # game_state = GameState(requires_map_file_path=full_maps)  # デバッグ用：特定フロア指定
+    game_state = GameState(requires_map_file_path=["map_data/map06.txt"])  # デバッグ用：特定フロア指定
     agent = ModeBasedAI(game_state = game_state)
     
     while game_state.game_state():
