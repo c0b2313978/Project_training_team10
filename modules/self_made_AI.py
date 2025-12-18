@@ -232,26 +232,30 @@ class ModeBasedAI:
             
             # 隣接ノード探索
             for move_dir in directions:
-                next_pos, step_cost = self.simulate_move(current_pos, move_dir, info)
+                next_pos, step_cost, traversed_positions = self.simulate_move(current_pos, move_dir, info)
                 
                 # 通行不可（勝ち目のないモンスターなど）の場合はスキップ
                 if step_cost == self.INF:
                     continue
                 
                 new_cost = current_cost + step_cost
+                next_first_move = first_move if first_move else move_dir
+
+                # 氷床上を滑っている途中でもアイテムを取得できるため途中経路も確認
+                if any(pos in targets for pos in traversed_positions):
+                    return next_first_move
                 
                 # コスト更新判定
                 if new_cost < min_costs.get(next_pos, self.INF):
                     min_costs[next_pos] = new_cost
-                    next_first_move = first_move if first_move else move_dir
                     heapq.heappush(pq, (new_cost, next_pos, next_first_move))
 
         return ""  # 経路が見つからない場合
     
-    def simulate_move(self, start_pos: tuple[int, int], move_dir_char: str, info: dict) -> tuple[tuple[int, int], int]:
+    def simulate_move(self, start_pos: tuple[int, int], move_dir_char: str, info: dict) -> tuple[tuple[int, int], int, list[tuple[int, int]]]:
         """
         ある位置からある方向へ移動した際の結果をシミュレーションする。 iceによる滑りと，teleportによる移動を考慮．
-        return: 到達座標, 移動コスト
+        return: 到達座標, 移動コスト, 通過した座標リスト
         """
         dr, dc = DIRECTIONS[move_dir_char]
         grid = info['floor']['grid']
@@ -261,12 +265,12 @@ class ModeBasedAI:
         
         # 壁判定
         if not (0 <= next_r < rows and 0 <= next_c < cols) or grid[next_r][next_c] != '.':
-            return start_pos, self.INF
+            return start_pos, self.INF, []
 
         # 閉じたドア判定
         closed_doors = {tuple(d['pos']) for d in info['floor']['doors'] if not d['opened']}
         if (next_r, next_c) in closed_doors:
-            return start_pos, self.INF
+            return start_pos, self.INF, []
 
         current_pos = (next_r, next_c)
         total_cost = self.calculate_step_cost(current_pos, info)  # 1歩目のコスト
@@ -312,8 +316,7 @@ class ModeBasedAI:
             current_pos = target_pos
             total_cost += self.calculate_step_cost(current_pos, info)
         
-        return current_pos, total_cost
-
+        return current_pos, total_cost, path_positions
 
 
 
