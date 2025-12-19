@@ -330,7 +330,7 @@ class Floor:
         for teleport in self.teleports.values():
             new_pos = teleport.get_destination(player.position)
             if new_pos is not None:
-                player.position = teleport.get_destination(player.position)
+                player.position = new_pos
                 break
 
 
