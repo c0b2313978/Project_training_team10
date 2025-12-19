@@ -15,7 +15,7 @@ def main(auto_play=False):
         if auto_play:
             info, legal_actions = game_state.get_known_info()
             command = agent.decide_move(info, legal_actions)
-        input()  # 一時停止（手動操作時用）
+            input()  # 一時停止（手動操作時用）
         game_state.step_turn(command)
 
 
@@ -23,7 +23,7 @@ full_maps = [f"map_data/map{file_name:02d}.txt" for file_name in range(1, 9)]
 
 def tmp(auto_play=False):
     # game_state = GameState(requires_map_file_path=full_maps)  # デバッグ用：特定フロア指定
-    game_state = GameState(requires_map_file_path=["map_data/map06.txt"])  # デバッグ用：特定フロア指定
+    game_state = GameState(requires_map_file_path=["map_data/map08.txt"])  # デバッグ用：特定フロア指定
     agent = ModeBasedAI(game_state = game_state)
     
     while game_state.game_state():
@@ -31,10 +31,33 @@ def tmp(auto_play=False):
         if auto_play:
             info, legal_actions = game_state.get_known_info()
             command = agent.decide_move(info, legal_actions)
-        input()  # 一時停止（手動操作時用）
+            input()  # 一時停止（手動操作時用）
         game_state.step_turn(command)
 
 
+def performance_evaluation(times = 100, agent_class = ModeBasedAI):
+    from random import seed
+    seed(0)  # 再現性のため乱数シード固定
+
+    win_count = 0
+    for i in range(times):
+        print(f"=== 試行回数: {i+1} / {times} ===")
+        game_state = GameState()
+        agent = agent_class(game_state = game_state)
+        
+        while game_state.game_state():
+            info, legal_actions = game_state.get_known_info()
+            command = agent.decide_move(info, legal_actions)
+            game_state.step_turn(command)
+        
+        if game_state.is_game_cleared:
+            win_count += 1
+        print(f"現在の勝率: {win_count / (i+1) * 100:.2f}%\n")
+
+    print(f"=== 最終結果 勝率: {win_count / times * 100:.2f}% ===")
+
+
 if __name__ == "__main__":
-    main(auto_play=True)
+    # main(auto_play=True)
+    tmp(auto_play=False)
     # tmp(auto_play=True)
