@@ -25,9 +25,6 @@ class ModeBasedAI:
         self.name = name
         self.mode = "WEAPON_SEARCH"
 
-        # self.not_enough_keys_counter = 0  # 鍵不足でゴールに到達できなかった回数
-        # self.required_keys_for_goal = set()  # ゴールに到達するために必要な鍵．ゴールに到達時に更新される．フロアクリアでリセット．
-
         self.info_by_experience = {}  # 移動履歴に基づく情報辞書
         self.teleport_map = {}  # {source_pos: target_pos}
         self.known_teleport_cells = set()
@@ -121,21 +118,15 @@ class ModeBasedAI:
         
         if player_info['keys']:
             return "GOAL_SEARCH"
-
-        # # 鍵を持っていたら，いったんゴールまで向かう
-        # if player_info['keys'] and self.not_enough_keys_counter == 0:
-        #     return "GOAL_SEARCH"
         
         # 隠しアイテム探索
         if floor_info['hidden_items']:
-        # if floor_info['hidden_items'] and (self.required_keys_for_goal - set(player_info['keys'])):
             return "HIDDEN_ITEM_SEARCH"
         
         # ゴールに必要な鍵が足りない場合，モンスター討伐モード
         if floor_info['monsters']: 
             return "MONSTER_HUNT"
         
-        raise Exception("いったんエラー")
         return "GOAL_SEARCH"
 
     # 戦闘ダメージ予測
