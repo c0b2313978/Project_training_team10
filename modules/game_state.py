@@ -13,10 +13,9 @@ class GameState:
             TARGET_CLEAR = len(self.requires_map_file_path)  # デバッグ用：クリア必要フロア数
             self.all_floors = self.requires_map_file_path  # デバッグ用：特定フロア指定
         else:
-            self.all_floors = random.sample(list(range(1, TOTAL_FLOORS + 1)), TARGET_CLEAR)  # クリア必要フロアリスト
+            self.all_floors = random.sample(list(range(1, TOTAL_FLOORS + 1)), TARGET_CLEAR-1)  # クリア必要フロアリスト
             # self.all_floors = list(range(1, TOTAL_FLOORS + 1))  # デバッグ用：全フロアクリア
             self.all_floors.append(0)  #  強制的にmap00を追加
-            TARGET_CLEAR+=1
             print(f"Selected Floors to Clear: {self.all_floors}")  # デバッグ用表示
 
         self.cleared_count = 0  # クリア済みフロア数
