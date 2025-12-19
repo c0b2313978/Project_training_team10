@@ -26,7 +26,7 @@ class GameState:
         self.is_game_cleared = False  # ゲームクリアフラグ
 
         self.floor: 'Floor' = self.start_floor()  # 現在のフロアインスタンス
-        print_all_opening()
+        # print_all_opening()
         print("正常にフロアが開始されました。")  # デバッグ用表示
         self.player: 'Player' = Player(self.floor.start)  # プレイヤーインスタンス
         print() #マップごとのルール説明

@@ -276,8 +276,6 @@ class Floor:
                 pos = (i, j)
                 if player is not None and pos == player.position:  # プレイヤー位置
                     symbol = symbol_map["player"]
-                # elif pos == self.start:  # スタート位置
-                #     symbol = 'S'  # TODO: もしかしたらいらないかも？
                 elif pos in self.goal['pos']:  # ゴール位置
                     symbol = symbol_map["goal"]
                 elif pos in entity_symbols:  # アイテム・モンスター・ギミック
@@ -334,14 +332,6 @@ class Floor:
                 break
 
 
-    # # ===== モンスターとの遭遇判定 =====
-    # def check_monster_encounter(self, player: 'Player') -> Monster | None:
-    #     """ プレイヤーがモンスターと遭遇したか判定し、遭遇した場合はそのモンスターを返す """
-    #     for monster in self.monsters.values():
-    #         if monster.alive and monster.pos == player.position:
-    #             return monster
-    #     return None
-    
     # ===== モンスターとの戦闘処理 =====
     def battle_monster(self, player: Player, monster: Monster) -> None:
         """ プレイヤーとモンスターの戦闘処理 """
@@ -361,7 +351,7 @@ class Floor:
                     if item.type == 'trap' or item.type == 'weapon':  # 即時効果適用アイテム
                         item.apply_effect(player)
                     else:
-                        player.add_item(Item.create_item(**drop_item))  # 鍵, ポーションはインベントリに追加
+                        player.add_item(item)  # 鍵, ポーションはインベントリに追加
                 break
 
             # モンスターの攻撃
@@ -371,14 +361,6 @@ class Floor:
                 print("あなたは倒されてしまいました...")
                 break
 
-    # def generate_drop_items(self, monster: 'Monster') -> list[Item]:
-    #     """ モンスター撃破時のドロップアイテムリストを生成する """
-    #     drop_items = []
-    #     for drop_id in monster.drop_list:
-    #         drop_item = self.items.get(drop_id)
-    #         if drop_item and not drop_item.picked:
-    #             drop_items.append(drop_item)
-    #     return drop_items
 
     # ===== ゴール判定 =====
     def check_goal(self, player: Player) -> tuple[bool, str]:
