@@ -16,7 +16,7 @@ class Item:
     def __repr__(self):
         return f"Item(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
 
-    def apply_effect(self, player: 'Player') -> None:
+    def apply_effect(self, player: 'Player', output_file_object=None) -> None:
         """ プレイヤーにアイテム効果を適用する（サブクラスでオーバーライド） """
         pass
 
@@ -28,7 +28,7 @@ class Item:
 
 
 class Key(Item):
-    def apply_effect(self, player: 'Player') -> None:
+    def apply_effect(self, player: 'Player', output_file_object=None) -> None:
         """ プレイヤーにキー効果を適用する """
         pass
 
@@ -38,17 +38,17 @@ class Key(Item):
 
 class Weapon(Item):
     DEFAULT_ATTACK = 10
-    def apply_effect(self, player: 'Player') -> None:
+    def apply_effect(self, player: 'Player', output_file_object=None) -> None:
         """ プレイヤーに装備効果を適用する """
         attack_bonus = self.params.get('atk', random.randint(1, self.DEFAULT_ATTACK))
-        player.equip_weapon(self, attack_bonus)
+        player.equip_weapon(self, attack_bonus, output_file_object=output_file_object)
 
     def __repr__(self):
         return f"Weapon(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
 
 
 class Potion(Item):
-    def apply_effect(self, player: 'Player') -> None:
+    def apply_effect(self, player: 'Player', output_file_object=None) -> None:
         """ プレイヤーにポーション効果を適用する """
         player.hp = player.MAX_HP  # HP全回復（仮）
 
@@ -58,17 +58,17 @@ class Potion(Item):
 
 class Trap(Item):
     DEFAULT_DAMAGE = 10
-    def apply_effect(self, player: 'Player') -> None:
+    def apply_effect(self, player: 'Player', output_file_object=None) -> None:
         """ プレイヤーに罠効果を適用する """
         damage = self.params.get('damage', self.DEFAULT_DAMAGE)  # ダメージ量
         player.hp -= damage
-        print(f"罠にかかりました！ {damage} のダメージを受けました。")
+        print(f"罠にかかりました！ {damage} のダメージを受けました。", file=output_file_object)
 
     def __repr__(self):
         return f"Trap(id={self.id}, type={self.type}, pos={self.pos}, hidden={self.hidden}, params={self.params})"
 
 class Dummy(Item):
-    def apply_effect(self, player: 'Player') -> None:
+    def apply_effect(self, player: 'Player', output_file_object=None) -> None:
         """ 何も効果を発揮しないアイテム """
         pass
 

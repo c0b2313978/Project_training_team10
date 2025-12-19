@@ -294,7 +294,7 @@ class Floor:
 
 
     # ==================== イベント処理 ====================
-    def _handle_cell_items(self, player: Player, cell_pos: tuple[int, int]) -> None:
+    def _handle_cell_items(self, player: Player, cell_pos: tuple[int, int], output_file_object=None) -> None:
         for item in self.items.values():
             if item.picked or item.pos != cell_pos:
                 continue  # 位置が違うか、既に回収済み
@@ -303,26 +303,26 @@ class Floor:
                 continue  # 隠しアイテムは発見されない
 
             if item.type in ('trap', 'weapon'):  # 罠・武器の即時効果適用
-                item.apply_effect(player)
+                item.apply_effect(player, output_file_object=output_file_object)
                 item.picked = True
             else:
                 player.add_item(item)
                 item.picked = True
-                print(f"アイテム {item.id} ({item.type}) を取得しました。")
+                print(f"アイテム {item.id} ({item.type}) を取得しました。", file=output_file_object)
 
     # ===== 踏んだ瞬間の処理 を一括で行う =====
-    def enter_cell(self, player: Player) -> None:
+    def enter_cell(self, player: Player, output_file_object=None) -> None:
         """ プレイヤーがセルに入った際のイベント処理 """
         traversed_positions = [player.position]
         if self.gimmicks and self.gimmicks.is_ice_cell(player.position):
             self.gimmicks.ice_gimmick_effect(player, on_visit=traversed_positions.append)  # 氷床ギミック処理
 
         for pos in traversed_positions:  # 通過した全セルに対して処理
-            self._handle_cell_items(player, pos)
+            self._handle_cell_items(player, pos, output_file_object=output_file_object)
             if self.gimmicks:  # ダメージ床
                 damage = self.gimmicks.apply_terrain_damage(player, pos)
                 if damage:
-                    print(f"足元のダメージ床で {damage} ダメージを受けた！ (残りHP: {player.hp})")
+                    print(f"足元のダメージ床で {damage} ダメージを受けた！ (残りHP: {player.hp})", file=output_file_object)
         
         # テレポート
         for teleport in self.teleports.values():
@@ -333,17 +333,17 @@ class Floor:
 
 
     # ===== モンスターとの戦闘処理 =====
-    def battle_monster(self, player: Player, monster: Monster) -> None:
+    def battle_monster(self, player: Player, monster: Monster, output_file_object=None) -> None:
         """ プレイヤーとモンスターの戦闘処理 """
         # print(f"モンスター {monster.id} と遭遇しました！ 戦闘開始！")
 
         while player.hp > 0 and monster.hp > 0:
             # プレイヤーの攻撃
             monster.hp -= player.attack
-            print(f"あなたの攻撃！ モンスター {monster.id} に {player.attack} のダメージ！ (残りHP: {max(monster.hp, 0)})")
+            print(f"あなたの攻撃！ モンスター {monster.id} に {player.attack} のダメージ！ (残りHP: {max(monster.hp, 0)})", file=output_file_object)
             if monster.hp <= 0:
                 monster.alive = False
-                print(f"モンスター {monster.id} を倒しました！")
+                print(f"モンスター {monster.id} を倒しました！", file=output_file_object)
                 
                 # ドロップアイテム処理
                 for drop_item in monster.drop_list:
@@ -356,9 +356,9 @@ class Floor:
 
             # モンスターの攻撃
             player.hp -= monster.attack
-            print(f"モンスター {monster.id} の攻撃！ あなたは {monster.attack} のダメージを受けました！ (残りHP: {max(player.hp, 0)})")
+            print(f"モンスター {monster.id} の攻撃！ あなたは {monster.attack} のダメージを受けました！ (残りHP: {max(player.hp, 0)})", file=output_file_object)
             if player.hp <= 0:
-                print("あなたは倒されてしまいました...")
+                print("あなたは倒されてしまいました...", file=output_file_object)
                 break
 
 

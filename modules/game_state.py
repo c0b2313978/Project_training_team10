@@ -4,7 +4,9 @@ from modules.constants import MAP_DIR_PATH, TARGET_CLEAR, TOTAL_FLOORS, DIRECTIO
 import random
 
 class GameState:
-    def __init__(self, requires_map_file_path: list[str] = []) -> None:
+    def __init__(self, requires_map_file_path: list[str] = [], output_file_object=None) -> None:
+        self.output_file = output_file_object
+
         self.is_game_state = True  # ゲーム進行中フラグ
 
         self.requires_map_file_path = requires_map_file_path
@@ -26,10 +28,10 @@ class GameState:
 
         self.floor: 'Floor' = self.start_floor()  # 現在のフロアインスタンス
         # print_all_opening()
-        print("正常にフロアが開始されました。")  # デバッグ用表示
         self.player: 'Player' = Player(self.floor.start)  # プレイヤーインスタンス
-        print() #マップごとのルール説明
-        print(self.floor.rule)
+        # print() #マップごとのルール説明
+        # print(self.floor.rule)
+
 
     # ====== ゲーム進行管理 ======
     def game_state(self) -> bool:
@@ -56,24 +58,24 @@ class GameState:
 
         if self.cleared_count >= TARGET_CLEAR:
             self.is_game_cleared = True
-            # print("おめでとうございます！すべてのフロアをクリアしました！")
+            # print("おめでとうございます！すべてのフロアをクリアしました！", file=self.output_file)
         else:
-            print(f"フロアクリア！ 残り {TARGET_CLEAR - self.cleared_count} 層です。")
+            print(f"フロアクリア！ 残り {TARGET_CLEAR - self.cleared_count} 層です。", file=self.output_file)
     
     def check_game_over(self) -> bool:
         """ ゲームオーバー判定 """
         if self.player.hp <= 0:
             self.is_game_over = True
-            print("あなたは力尽きました。ゲームオーバーです。")
+            print("あなたは力尽きました。ゲームオーバーです。", file=self.output_file)
             return True
         return False
 
     def check_game_cleared(self) -> bool:
         """ ゲームクリア判定 """
         if self.is_game_cleared:
-            print("\n\n\n")
-            print_game_text("game_texts/Ending.txt")
-            print("Congratulations on clearing the game!")
+            print("\n\n\n", file=self.output_file)
+            print_game_text("game_texts/Ending.txt", output_file_object=self.output_file)
+            print("Congratulations on clearing the game!", file=self.output_file)
             return True
         return False
 
@@ -90,27 +92,28 @@ class GameState:
     # ===== ゲーム状態更新 ======
     def step_turn(self, command = "") -> None:
         """ 1ターン（プレイヤー入力 -> セルイベント -> 敵行動 -> 判定） """
-        self.floor.print_grid(self.player)
-        print()
-        self.player.print_status()
-        print()
+
+        self.floor.print_grid(self.player, output_file_object=self.output_file)
+        print(file=self.output_file)
+        self.player.print_status(output_file_object=self.output_file)
+        print(file=self.output_file)
 
         if not command in ['w', 'a', 's', 'd', 'u', 'q', 'r']:
             command = self.read_command()  # コマンド入力
 
         if command == 'q':
-            print("ゲーム終了します。")
+            print("ゲーム終了します。", file=self.output_file)
             self.is_game_over = True
             return
 
         elif command == 'u':
-            self.player.use_potion()  # ポーション使用
+            self.player.use_potion(output_file_object=self.output_file)  # ポーション使用
             return
         
         elif command == 'r':
-            print()
-            print(self.floor.rule)
-            print("\n")
+            print(file=self.output_file)
+            print(self.floor.rule, file=self.output_file)
+            print("\n", file=self.output_file)
             return
         
         new_position = try_move_player(self.player, command, self.floor.grid)
@@ -122,7 +125,7 @@ class GameState:
             return
         
         # セルに入った際のイベント処理
-        self.floor.enter_cell(self.player)
+        self.floor.enter_cell(self.player, output_file_object=self.output_file)
 
         # モンスター行動
         occupied = {m.pos for m in self.floor.monsters.values() if m.alive}
@@ -146,8 +149,8 @@ class GameState:
             if not monster.alive:
                 continue
             if monster.pos == self.player.position:
-                print(f"モンスター {monster.id} と遭遇しました！戦闘開始！  - game_state.py - step_turn()")
-                self.floor.battle_monster(self.player, monster)
+                print(f"モンスター {monster.id} と遭遇しました！戦闘開始！", file=self.output_file)
+                self.floor.battle_monster(self.player, monster, output_file_object=self.output_file)
 
         # ゴール判定
         is_goal, goal_message = self.floor.check_goal(self.player)
@@ -159,15 +162,15 @@ class GameState:
                 self.floor = self.start_floor()
                 self.player.position = self.floor.start
                 self.player.recalculate_attack()
-                print() #マップごとのルール説明
-                print(self.floor.rule)
-                print("\n")
+                # print() #マップごとのルール説明
+                # print(self.floor.rule)
+                # print("\n")
             else:
                 self.check_game_cleared()  #この関数が発生しないbugを直した
             return
         else:
             if goal_message:
-                print(goal_message)
+                print(goal_message, file=self.output_file)
 
         self.check_game_over()
         self.check_game_cleared()
@@ -242,17 +245,17 @@ class GameState:
 # ==================== 便利関数群 ====================
 
 #ファイル読み、文字出力
-def print_game_text(file_path):
+def print_game_text(file_path, output_file_object=None):
     with open(file_path, 'r', encoding='utf-8') as f:
         text = f.read()
-    print(text)
+    print(text, file=output_file_object)
 
-def print_all_opening():
+def print_all_opening(output_file_object=None):
     arry = ["game_texts/Firstgame_ui.txt","game_texts/Opening.txt","game_texts/Basic_rule.txt","game_texts/Controls_guide.txt"]
     for i in arry:
         with open(i, 'r', encoding='utf-8') as f:
             text = f.read()
-        print(text)
+        print(text, file=output_file_object)
         input("")
 
 # プレイヤーからのコマンド入力を受け取る

@@ -25,9 +25,11 @@ class ModeBasedAI:
         self,
         name="ModeBasedAI",
         game_state: GameState = None,
-        assume_two_teleports_are_paired: bool = True,
+        output_file_object = None
     ):
         self.name = name
+        self.output_file_object = output_file_object
+
         self.mode = "WEAPON_SEARCH"
         self.previous_floor_id = -1  # 1手前のフロアID
         self.current_floor_id = -1  # 現在のフロアID
@@ -39,15 +41,14 @@ class ModeBasedAI:
 
         # self.info_by_experience = {}  # 移動履歴に基づく情報辞書
         self.teleport_map: dict[tuple[int, int], dict] = {}  # {source_pos: {"target": target_pos, "confirmed": bool}}
-        # self.assume_two_teleports_are_paired = assume_two_teleports_are_paired
 
         self.ice_regions = set()  # 氷セル集合
 
 
-        print("[ModeBasedAI] Initialized")
+        print("[ModeBasedAI] Initialized", file=self.output_file_object)
         if game_state:
             info, _ = game_state.get_known_info()
-            print(info)
+            print(info, file=self.output_file_object)
 
             for gimmick in info['floor']['gimmicks']:
                 if gimmick['type'] == 'ice':
@@ -108,7 +109,7 @@ class ModeBasedAI:
         self.current_floor_id = info['floor']['id']
         if self.previous_floor_id != self.current_floor_id:
             self._init_info_on_floor_change(info['floor'])
-            print(f"[ModeBasedAI] Floor changed to {self.current_floor_id}")
+            print(f"[ModeBasedAI] Floor changed to {self.current_floor_id}", file=self.output_file_object)
 
         # プレイヤー位置更新
         player_pos = tuple(info['player']['position'])
@@ -123,8 +124,8 @@ class ModeBasedAI:
 
         # モード決定
         self.mode = self.decide_mode(info)
-        print(f"[ModeBasedAI] Current mode: {self.mode}")
-        print(f"[ModeBasedAI] Player pos: {player_pos}")
+        print(f"[ModeBasedAI] Current mode: {self.mode}", file=self.output_file_object)
+        print(f"[ModeBasedAI] Player pos: {player_pos}", file=self.output_file_object)
 
         if self.mode == "USE_POTION":
             return 'u'
@@ -154,7 +155,7 @@ class ModeBasedAI:
         if not targets:
             raise Exception("ターゲットが見つからない")
         
-        print(f"[ModeBasedAI] Targets: {targets}")
+        print(f"[ModeBasedAI] Targets: {targets}", file=self.output_file_object)
 
         # ダイクストラ法で次の移動方向を決定
         best_move = self.dijkstra(player_pos, targets, info)
@@ -224,16 +225,8 @@ class ModeBasedAI:
     def teleport_confirm(self, source_pos: tuple[int, int], target_pos: tuple[int, int]):
         """ テレポートギミックの情報を記録する """
         self.teleport_map[source_pos] = {"target": target_pos, "confirmed": True}
-
-        # 「2個ならペア」仮定が外れたと分かった場合、残りの仮定は無効化する（未確定のみ）
-        # if len(self.teleport_map) == 2:
-            # other_positions = [p for p in self.teleport_map.keys() if p != source_pos]
-            # if other_positions:
-            #     other_pos = other_positions[0]
-            #     other_entry = self.teleport_map.get(other_pos, {})
-            #     if (not other_entry.get("confirmed")) and target_pos != other_pos:
-            #         self.teleport_map[other_pos] = {"target": (-1, -1), "confirmed": False}
     
+
     def teleport_suspect(self, source_pos: tuple[int, int], target_pos: tuple[int, int]):
         """ テレポートギミックの仮情報を記録する """
         if source_pos in self.teleport_map and not self.teleport_map[source_pos]['confirmed']:
@@ -408,14 +401,5 @@ class ModeBasedAI:
         # Teleport ギミック
         if consider_teleport and current_pos in self.teleport_map and self.teleport_map[current_pos]['target'] != (-1, -1):           
             current_pos = self.teleport_map[current_pos]['target']  # テレポート先に移動
-            # コスト加算はしないものとする
-            # player_info = info['player']
-            # for monster in info['floor']['monsters']:
-            #     if tuple(monster['pos']) == current_pos:
-            #         damage = self._estimate_monster_damage(monster['strength'], player_info['attack'])
-            #         if damage >= player_info['hp']:
-            #             return start_pos, self.INF, []
-            #         total_cost += damage
-            #         break
 
         return current_pos, total_cost, path_positions
