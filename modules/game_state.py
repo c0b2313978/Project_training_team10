@@ -226,6 +226,7 @@ class GameState:
                 'equipped_weapon_attack': self.player.equipped_weapon_attack,
             },
             'floor': {
+                'id': self.floor.floor_id,
                 'grid': self.floor.grid,
                 'visible_items': visible_items,
                 'hidden_items': revealed_hidden_items,  # 隠しアイテムのうち，?で表示されるもの． 位置のみわかる
