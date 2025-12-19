@@ -246,22 +246,32 @@ class Floor:
         return symbols
 
     # ===== マップ表示 =====
-    def print_grid(self, player: Player = None, output_file_object = None, full_width: bool = True) -> str:
+    def print_grid(self, player: Player = None, output_file_object = None, full_width: bool = True, coordinate_display: bool = True) -> str:
         """
         マップ全体を表示する
         引数:
             player: プレイヤーオブジェクトを指定すると、プレイヤー位置を表示する
             full_width: True なら全角シンボル、False なら半角シンボルで表示する
             output_file_object: ファイルオブジェクトを指定すると、そこに出力する（デフォルトは標準出力）
+            coordinate_display: True なら行列番号を表示する (0-indexed)
         返り値: 
             出力したマップ文字列
         """
         entity_symbols = self._collect_entity_symbols()
         symbol_map = ENTITY_SYMBOLS_FULL_WIDTH if full_width else ENTITY_SYMBOLS
         output = ""  # 出力用文字列
+        
+        if coordinate_display:  # 列番号表示
+            output += "　" if full_width else " "  # 左上隅スペース
+            for col in range(self.map_size[1]):
+                output += f"{col:2}" if full_width else f"{col:>2}"  # 列番号追加
+            output += "\n"
 
         for i in range(self.map_size[0]):
             row = []
+            if coordinate_display:
+                row.append(f"{i:<2}" if full_width else f"{i:>2}")  # 行番号追加
+            
             for j in range(self.map_size[1]):
                 pos = (i, j)
                 if player is not None and pos == player.position:  # プレイヤー位置
@@ -406,7 +416,7 @@ class Floor:
 # Floor 実験用コード
 # python -m modules.floor
 if __name__ == "__main__":
-    map_file = "map_data/map07.txt"
+    map_file = "map_data/map06.txt"
     # map_file = "map_data/sample01.txt"
     floor = Floor(map_file, floor_id="1")
     floor.print_info()

@@ -36,5 +36,5 @@ def tmp(auto_play=False):
 
 
 if __name__ == "__main__":
-    # main(auto_play=True)
-    tmp(auto_play=True)
+    main(auto_play=True)
+    # tmp(auto_play=True)

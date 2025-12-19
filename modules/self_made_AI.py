@@ -1,7 +1,6 @@
 import random
 import heapq
 import math
-from modules.floor import Floor
 from modules.game_state import GameState
 from modules.constants import DIRECTIONS
 
@@ -50,7 +49,7 @@ class ModeBasedAI:
         """
         次の移動方向を決定する
         info, legal_actions は GameState.get_known_info() から取得したもの
-        return: 'w'|'a'|'s'|'d'|'u'
+        return: w|a|s|d|u
         """
         # 情報取得
         player_pos = info['player']['position']
@@ -88,6 +87,8 @@ class ModeBasedAI:
         if not targets:
             raise Exception("ターゲットが見つからない")
         
+        print(f"[ModeBasedAI] Targets: {targets}")
+
         # ダイクストラ法で次の移動方向を決定
         best_move = self.dijkstra(player_pos, targets, info)
 
@@ -98,7 +99,7 @@ class ModeBasedAI:
 
         return best_move
     
-    def decide_mode(self, info) -> str:
+    def decide_mode(self, info: dict) -> str:
         player_info = info['player']
         floor_info = info['floor']
         
@@ -201,7 +202,7 @@ class ModeBasedAI:
     # 経路探索
     def dijkstra(self, start_pos: tuple[int, int], targets: set[tuple[int, int]], info: dict) -> str:
         """
-        ダイクストラ法を用いてターゲットまでの最短（最小コスト）経路を探索する。
+        ダイクストラ法を用いてターゲットまでの最短（最小コスト）経路を探索する．
         最初の一歩の方向('w', 'a', 's', 'd')を返す
         """
         grid = info['floor']['grid']
@@ -211,13 +212,6 @@ class ModeBasedAI:
         
         # 訪問済みコスト管理: 座標 -> 最小コスト
         min_costs = {start_pos: 0}
-        
-        directions = {
-            'w': (-1, 0), 
-            'a': (0, -1), 
-            's': (1, 0), 
-            'd': (0, 1)
-            }
 
         while pq:
             current_cost, current_pos, first_move = heapq.heappop(pq)
@@ -231,7 +225,7 @@ class ModeBasedAI:
                 return first_move
             
             # 隣接ノード探索
-            for move_dir in directions:
+            for move_dir in DIRECTIONS:
                 next_pos, step_cost, traversed_positions = self.simulate_move(current_pos, move_dir, info)
                 
                 # 通行不可（勝ち目のないモンスターなど）の場合はスキップ
