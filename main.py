@@ -1,6 +1,12 @@
-# Team 10 C0B23139
+# Team 10 C0B23139 森山悠太
 """
 自作AIの行動決定ロジックは modules/self_made_AI.py の ModeBasedAI クラス内に実装されています．ロジックの詳細な説明は modules/self_made_AI.py の冒頭コメントをご参照ください．
+
+実行方法:
+if __name__ == "__main__": ブロック内で以下のいずれかを呼び出してください:
+- 自動プレイ: main(auto_play=True)
+- 手動プレイ: main(auto_play=False)
+- AIの性能評価: performance_evaluation(times=試行回数, agent_class=ModeBasedAI, file_output=True)
 
 ## メインループの構造
 1. main.py の main 関数内で GameState インスタンスを生成
@@ -60,11 +66,12 @@ legal_actions は現在可能な行動コマンドのリスト:
     4. teleport は floor 変更時に初期化し，前ターン行動から対応先を推定・確定して経験的に teleport_map を更新する．
 
 """
-
-# from random import seed
-# seed(20)
+import os
+from random import seed
 from modules.game_state import GameState
 from modules.self_made_AI import RandomAI, ModeBasedAI
+
+# seed(0)
 
 # Main ループ
 def main(auto_play=False, agent_class=ModeBasedAI, file_output = False):
@@ -91,9 +98,13 @@ def main(auto_play=False, agent_class=ModeBasedAI, file_output = False):
 # AIの性能評価確認用
 def performance_evaluation(times = 100, agent_class = ModeBasedAI, file_output = True):
     win_count = 0
+    output_file_directory = "logs"
+    if file_output and not os.path.exists(output_file_directory):
+        os.makedirs(output_file_directory)
+    
     for i in range(times):
         print(f"=== 試行回数: {i+1} / {times} ===")
-        output_file_path = f"logs/attempt_{i+1:03d}.txt"
+        output_file_path = f"{output_file_directory}/attempt_{i+1:03d}.txt"
         output_file_object = open(output_file_path, mode='w', encoding='utf-8') if file_output else None
 
         game_state = GameState(output_file_object=output_file_object)
@@ -122,7 +133,7 @@ full_maps = [f"map_data/map{file_name:02d}.txt" for file_name in range(1, 9)]
 easy_maps = [f"map_data/map{file_name:02d}.txt" for file_name in (1, 2, 3, 5, 6)]
 def tmp(auto_play=False):
     # game_state = GameState(requires_map_file_path=easy_maps)  # デバッグ用：特定フロア指定
-    game_state = GameState(requires_map_file_path=["map_data/map07.txt"])  # デバッグ用：特定フロア指定
+    game_state = GameState(requires_map_file_path=["map_data/map06.txt"])  # デバッグ用：特定フロア指定
     agent = ModeBasedAI()
     
     while game_state.game_state():
@@ -137,6 +148,6 @@ def tmp(auto_play=False):
 
 if __name__ == "__main__":
     # main(auto_play=True)
-    tmp(auto_play=True)
+    # tmp(auto_play=True)
     # tmp(auto_play=False)
-    # performance_evaluation(times=100, agent_class=ModeBasedAI, file_output=True)
+    performance_evaluation(times=100, agent_class=ModeBasedAI, file_output=True)

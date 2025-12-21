@@ -1,11 +1,129 @@
 """
-ModeBasedAI クラス概説
+ModeBasedAI クラス (line: 142 ~) 概説
 
 状況に応じた「モード」を決定し，ダイクストラ法を用いてターゲットへの最短（最小コスト）経路を算出するAI．
 氷床の滑りやテレポートの学習など，フロアギミックの挙動をシミュレーションに組み込んでいる．
 
+decide_move (line: 175 ~ 296)
+    ゲーム情報を受け取り，次の行動コマンドを決定する．
+    Args:
+        - info: ゲーム状態（プレイヤー，フロア，アイテム等）の辞書．
+        - legal_actions: 実行可能な行動のリスト．
+    処理の流れ:
+        1. フロア情報の更新 (line: 183 ~ 194)
+            - 現在のフロアIDを取得する．
+            - フロアIDが直前と異なる場合，_init_info_on_floor_change を呼び出し情報をリセットする．
+        2. プレイヤー位置の更新 (line: 196 ~ 199)
+            - 直前の位置と現在の位置を更新する．
+        3. テレポート情報の更新 (line: 202)
+            - _update_teleport_map_from_last_turn を呼び出し，前ターンの移動結果からテレポートの接続先を推定・更新する．
+        4. モード決定 (line: 206 ~ 210)
+            - decide_mode を呼び出し，現在の状況に最適なモードを決定する．
+            - モードが 'USE_POTION' の場合，即座に 'u' を返す．
+        5. ターゲット設定 (line: 212 ~ 241)
+            - モードに応じて，フロア情報から目的地（ターゲット）の座標集合を作成する．
+            - WEAPON_SEARCH: 見えている武器の座標．
+            - POTION_SEARCH: 見えているポーションの座標．
+            - KEY_SEARCH: 見えている鍵の座標．
+            - HIDDEN_ITEM_SEARCH: 隠しアイテムの座標．
+            - MONSTER_HUNT: 全モンスターの座標．
+            - GOAL_SEARCH: ゴールの座標．
+        6. 経路探索 (line: 246 ~ 251)
+            - dijkstra メソッドを呼び出し，現在地からターゲットへの最適ルートと最初の一手を算出する．
+        7. テレポート探索への切り替え (line: 256 ~ 265)
+            - 経路が見つからず，かつ未確定のテレポートマスが存在する場合，モードを 'TELEPORT_EXPLORE' に変更する．
+            - 未確定テレポートマスをターゲットとして再度 dijkstra を実行する．
+        8. 安全確認とコマンド決定 (line: 275 ~ 290)
+            - 算出された経路上に「現在のHPで倒せないモンスター」が存在し，かつポーション所持かつHP回復で耐えられる場合，行動を 'u' (ポーション使用) に変更する．
+            - 経路がない，または無効な手の場合，合法手から 'u' 以外をランダム選択する．
+        9. 状態更新と返り値 (line: 292 ~ 295)
+            - 直前と現在の移動方向変数を更新し，決定したコマンドを返す．
 
+decide_mode (line: 298 ~ 329)
+    優先順位に基づいてAIの行動モードを決定する．
+    処理の流れ:
+        以下の順序で条件を判定し，最初に合致したモードを返す．
+        1. HPが30以下 かつ ポーション所持 -> 'USE_POTION'
+        2. フロアに武器が存在する -> 'WEAPON_SEARCH'
+        3. フロアにポーションが存在 かつ 所持数3未満 -> 'POTION_SEARCH'
+        4. フロアに鍵が存在する -> 'KEY_SEARCH'
+        5. プレイヤーが鍵を所持している -> 'GOAL_SEARCH'
+        6. 隠しアイテムが存在する -> 'HIDDEN_ITEM_SEARCH'
+        7. モンスターが存在する（鍵ドロップ狙い） -> 'MONSTER_HUNT'
+        8. 上記以外 -> 'GOAL_SEARCH'
 
+_init_info_on_floor_change (line: 332 ~ 353)
+    フロア移動時に内部情報をリセットする．
+    処理内容:
+        - 位置，方向の変数を初期化する．
+        - テレポートマップを空にし，_teleport メソッドで初期情報を登録する．
+        - フロア情報の gimmicks から氷床の位置情報を取得し，ice_regions セットを更新する．
+
+_update_teleport_map_from_last_turn (line: 356 ~ 384)
+    直前の行動結果からテレポートのリンク情報を確定させる．
+    処理内容:
+        - 直前の位置から simulate_move を実行（テレポート考慮なし）し，予測される移動先座標を算出する．
+        - 予測座標がテレポートマスであり，かつ実際の現在地と異なる場合，テレポートが発生したと判断する．
+        - teleport_confirm を呼び出し，予測座標から現在地へのリンクを確定情報として記録する．
+
+_teleport (line: 386 ~ 401)
+    フロア開始時にテレポート情報を初期化する．
+    処理内容:
+        - テレポートマスがちょうど2つの場合，相互リンク（双方向）と仮定して確定情報を登録する．
+        - それ以外の場合，リンク先不明の未確定情報として位置のみ登録する．
+
+teleport_confirm / teleport_suspect (line: 403 ~ 411)
+    テレポートマップへの情報の登録．
+    処理内容:
+        - confirm: リンク先と 'confirmed': True を設定する．
+        - suspect: リンク先と 'confirmed': False を設定する（現状コードでは未使用）．
+
+_estimate_monster_damage (line: 415 ~ 433)
+    モンスターとの戦闘による被ダメージを予測する．
+    処理内容:
+        - モンスターの強さ（weak/normal/strong）に応じたHPと攻撃力を設定する．
+        - プレイヤーがモンスターを倒すまでのターン数を計算する．
+        - (ターン数 - 1) × モンスター攻撃力 を被ダメージとして返す．
+
+calculate_step_cost (line: 436 ~ 469)
+    特定のマスへ進入する際のコストを計算する．
+    処理内容:
+        - 基本移動コスト（1）を設定する．
+        - 罠がある場合，コストを加算する（+10）．
+        - ダメージ床がある場合，コストを加算する（+1）．
+        - モンスターがいる場合:
+            - 戦闘ダメージを予測し，コストに加算する．
+            - ダメージが現在HP以上の場合（ポーション回復不能時），コストを無限大（INF）とし通行不可とする．
+
+dijkstra (line: 472 ~ 526)
+    ダイクストラ法による経路探索を行う．
+    Args:
+        - start_pos: 開始座標．
+        - targets: 目的地の座標集合．
+    Returns:
+        - 最短経路の最初の一手（方向文字）と，経路座標のリスト．
+    処理の流れ:
+        - 優先度付きキューと最小コスト管理辞書を初期化する．
+        - キューが空になるまで以下を繰り返す:
+            1. 最低コストのノードを取り出す．
+            2. 現在地が targets に含まれていれば，その時点の「最初の一手」と「経路」を返す．
+            3. 上下左右の各方向について simulate_move を実行する．
+            4. 移動コストが無限大ならスキップする．
+            5. 移動経路（滑り移動含む）の途中にターゲットが含まれるか確認し，あれば即座に返す．
+            6. 新しいコストが最小コストを更新する場合，キューに追加する．
+        - 経路が見つからない場合，空文字と空リストを返す．
+
+simulate_move (line: 528 ~ 592)
+    1手移動した後の座標，コスト，通過経路をシミュレーションする．
+    処理の流れ:
+        1. 壁，閉じたドア，マップ外判定を行い，移動不可ならコスト無限大を返す．
+        2. calculate_step_cost で1歩目のコストを計算する．
+        3. 氷床（ice）ギミック処理:
+            - 現在地が氷床である限り，進行方向へ滑り移動を繰り返す．
+            - 壁，ドア，氷床外に出るまでループし，通過マスのコストを加算し続ける．
+        4. テレポートギミック処理:
+            - 到達地点が確定済みテレポートマスなら，リンク先へ座標を更新する．
+        5. 最終的な到達座標，累積コスト，通過した座標リストを返す．
 """
 
 import random
@@ -62,7 +180,7 @@ class ModeBasedAI:
         Returns: 
             str: 決定した行動コマンド ('w', 'a', 's', 'd', 'u')
         """
-        # === 1. 情報の更新とフロア移動検出 ===
+        # === 情報の更新とフロア移動検出 ===
         floor_info = info['floor']
         player_info = info['player']
 
@@ -83,7 +201,7 @@ class ModeBasedAI:
         # 前ターンの行動と現在の位置を照らし合わせ，テレポートが発生したかを確認・記録する
         self._update_teleport_map_from_last_turn(floor_info=floor_info, player_info=player_info)
         
-        # === 2. モード決定 ===
+        # === モード決定 ===
         # HP，所持アイテム，フロアアイテムの状況から優先順位に基づいてモードを決定
         self.mode = self.decide_mode(floor_info=floor_info, player_info=player_info)
 
@@ -91,7 +209,7 @@ class ModeBasedAI:
         if self.mode == "USE_POTION":
             return 'u'
         
-        # === 3. モードに応じた目的地設定 ===
+        # === モードに応じた目的地設定 ===
         targets = set()
         
         if self.mode == "WEAPON_SEARCH":
@@ -122,7 +240,7 @@ class ModeBasedAI:
             # 論理的にあり得ないはずだが，ターゲットが空の場合は例外
             raise Exception("ターゲットが見つからない")
         
-        # === 4. 経路探索 (ダイクストラ法) ===
+        # === 経路探索 (ダイクストラ法) ===
         # 現在地からターゲット集合への最短経路（最小コスト経路）を探索
         # best_move: 最初の一手 ('w', 'a', 's', 'd'), best_path: 経路の座標リスト
         best_move, best_path = self.dijkstra(
@@ -132,7 +250,7 @@ class ModeBasedAI:
             player_info = player_info
         )
         
-        # === 5. リカバリー策: 未知のテレポート探索 ===
+        # === リカバリー策: 未知のテレポート探索 ===
         # ターゲットへの有効な経路が見つからず，かつ未確定のテレポートマスがある場合
         # モードを強制的に「テレポート探索」に切り替え，テレポートの飛び先を解明しに行く
         if best_move == "" and self.mode != "TELEPORT_EXPLORE":
@@ -152,7 +270,7 @@ class ModeBasedAI:
             print(f"[{self.name}] Targets: {targets}", file=self.output_file_object)
             print(f"[{self.name}] Best path: {best_path}", file=self.output_file_object)
 
-        # === 6. 安全確認 ===
+        # === 安全確認 ===
         # 算出した経路上にモンスターが存在する場合，今のHPで勝てるか判定する
         if player_info['potions'] and player_info['hp'] < self.MAX_HP and best_path:
             for monster in floor_info['monsters']:
@@ -163,7 +281,7 @@ class ModeBasedAI:
                     if damage >= player_info['hp']:
                         return 'u'
 
-        # === 7. 最終決定 ===
+        # === 最終決定 ===
         # 経路が見つからない，または算出された手が合法手でない場合（壁に向かうなど）
         final_move = best_move
         if final_move == "" or final_move not in legal_actions:
@@ -234,6 +352,7 @@ class ModeBasedAI:
             elif gimmick['type'] == 'terrain_damage':
                 pass  # 地形ダメージはコスト計算時に参照するためここでは保持しない
 
+    # ===== teleportギミック関連 =====
     def _update_teleport_map_from_last_turn(self, floor_info: dict, player_info: dict) -> None:
         """
         直前ターンの行動結果から，テレポートのリンク情報を更新する．
@@ -264,7 +383,6 @@ class ModeBasedAI:
         if end_before_teleport in self.teleport_map and end_before_teleport != self.current_position:
             self.teleport_confirm(end_before_teleport, self.current_position)
 
-    # ===== teleportギミック関連 =====
     def _teleport(self, floor_info: dict):
         """
         フロアデータからテレポートマスの位置情報を初期化する．
