@@ -246,7 +246,7 @@ class Floor:
         return symbols
 
     # ===== マップ表示 =====
-    def print_grid(self, player: Player = None, output_file_object = None, full_width: bool = True, coordinate_display: bool = True) -> str:
+    def print_grid(self, player: Player | None = None, output_file_object = None, full_width: bool = True, coordinate_display: bool = True) -> str:
         """
         マップ全体を表示する
         引数:
@@ -349,7 +349,7 @@ class Floor:
                 for drop_item in monster.drop_list:
                     item = Item.create_item(**drop_item)  # Itemオブジェクト生成
                     if item.type == 'trap' or item.type == 'weapon':  # 即時効果適用アイテム
-                        item.apply_effect(player)
+                        item.apply_effect(player, output_file_object=output_file_object)
                     else:
                         player.add_item(item)  # 鍵, ポーションはインベントリに追加
                 break

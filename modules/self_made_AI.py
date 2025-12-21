@@ -1,16 +1,18 @@
+"""
+modules.self_made_AI の Docstring
+"""
+
 import random
 import heapq
 import math
-from modules.game_state import GameState
 from modules.constants import DIRECTIONS
 
 class RandomAI:
     def __init__(self, name="RandomAI"):
         self.name = name
 
-    def decide_move(self, game_state: GameState):
-        actions = game_state.get_legal_actions()
-        return random.choice(actions)
+    def decide_move(self, info: dict, legal_actions: list[str]) -> str:
+        return random.choice(legal_actions)
 
 
 class ModeBasedAI:
@@ -21,116 +23,60 @@ class ModeBasedAI:
 
     INF = 10 ** 18
 
-    def __init__(
-        self,
-        name="ModeBasedAI",
-        game_state: GameState = None,
-        output_file_object = None
-    ):
+    def __init__(self, name="ModeBasedAI", output_file_object = None):
         self.name = name
         self.output_file_object = output_file_object
 
         self.mode = "WEAPON_SEARCH"
-        self.previous_floor_id = -1  # 1手前のフロアID
+        self.previous_floor_id = -1  # 1ターン前のフロアID
         self.current_floor_id = -1  # 現在のフロアID
 
-        self.previous_position = (-1, -1) # 1手前の位置
+        self.previous_position = (-1, -1) # 1ターン前の位置
         self.current_position = (-1, -1)  # 現在位置
-        self.previous_direction = ""    # 1手前の移動方向
+        self.previous_direction = ""    # 1ターン前の移動方向
         self.current_direction = ""     # 現在の移動方向
 
         # self.info_by_experience = {}  # 移動履歴に基づく情報辞書
         self.teleport_map: dict[tuple[int, int], dict] = {}  # {source_pos: {"target": target_pos, "confirmed": bool}}
-
         self.ice_regions = set()  # 氷セル集合
 
 
-        print("[ModeBasedAI] Initialized", file=self.output_file_object)
-        if game_state:
-            info, _ = game_state.get_known_info()
-            print(info, file=self.output_file_object)
-
-            for gimmick in info['floor']['gimmicks']:
-                if gimmick['type'] == 'ice':
-                    self.ice_regions.update({tuple(pos) for pos in gimmick['positions']})
-
-    def _init_info_on_floor_change(self, floor_info: dict):
-        """ フロア移動時の情報初期化 """
-        # フロアID更新
-        self.previous_floor_id = self.current_floor_id
-        # self.current_floor_id = info['floor']['id']
-
-        # 位置・方向情報初期化
-        self.previous_position = (-1, -1)
-        self.current_position = (-1, -1)
-        self.previous_direction = ""
-        self.current_direction = ""
-
-        # ギミック情報初期化
-        self.teleport_map = {}
-        self.ice_regions = set()
-        self._teleport(floor_info)
-
-    def _update_teleport_map_from_last_turn(self, info: dict) -> None:
-        """
-        直前ターンの行動から teleport を推定して teleport_map を更新する。
-        - 前ターン開始位置: self.previous_position
-        - 前ターン行動: self.current_direction
-        - 実際の現在位置: self.current_position
-        """
-        if self.previous_position == (-1, -1):
-            return
-
-        last_action = self.current_direction
-        if last_action not in DIRECTIONS:
-            return
-
-        end_before_teleport, step_cost, _ = self.simulate_move(
-            self.previous_position,
-            last_action,
-            info,
-            consider_teleport=False,
-        )
-        if step_cost == self.INF:
-            return
-
-        if end_before_teleport in self.teleport_map and end_before_teleport != self.current_position:
-            self.teleport_confirm(end_before_teleport, self.current_position)
-
     # ===== メイン処理 =====
-    def decide_move(self, info: dict, legal_actions: list[str]) -> str:
+    def decide_move(self, info: dict, legal_actions: list[str], output_debug=False) -> str:
         """
         次の移動方向を決定する
         info, legal_actions は GameState.get_known_info() から取得したもの
         return: w|a|s|d|u
         """
         # === 情報更新 ===
+        floor_info = info['floor']
+        player_info = info['player']
+
         # フロア移動検出
-        self.current_floor_id = info['floor']['id']
+        self.current_floor_id = floor_info['id']
         if self.previous_floor_id != self.current_floor_id:
-            self._init_info_on_floor_change(info['floor'])
-            print(f"[ModeBasedAI] Floor changed to {self.current_floor_id}", file=self.output_file_object)
+            self._init_info_on_floor_change(floor_info=floor_info)
+            
+            if output_debug: 
+                print(f"[{self.name}] Floor changed to {self.current_floor_id}", file=self.output_file_object)
+                print(f"Floor info: {floor_info}", file=self.output_file_object)
 
         # プレイヤー位置更新
-        player_pos = tuple(info['player']['position'])
+        player_pos = tuple(player_info['position'])
         self.previous_position = self.current_position
         self.current_position = player_pos
 
-        floor_info = info['floor']
-
         # 経験による teleport ギミックの情報更新（前ターンの行動から推定）
-        self._update_teleport_map_from_last_turn(info)
+        self._update_teleport_map_from_last_turn(floor_info=floor_info, player_info=player_info)
         
-
         # モード決定
-        self.mode = self.decide_mode(info)
-        print(f"[ModeBasedAI] Current mode: {self.mode}", file=self.output_file_object)
-        print(f"[ModeBasedAI] Player pos: {player_pos}", file=self.output_file_object)
+        self.mode = self.decide_mode(floor_info=floor_info, player_info=player_info)
 
+        # ポーション使用
         if self.mode == "USE_POTION":
             return 'u'
         
-        # モードに応じた目的地設定
+        # === モードに応じた目的地設定 ===
         targets = set()
         
         if self.mode == "WEAPON_SEARCH":
@@ -155,10 +101,18 @@ class ModeBasedAI:
         if not targets:
             raise Exception("ターゲットが見つからない")
         
-        print(f"[ModeBasedAI] Targets: {targets}", file=self.output_file_object)
+        if output_debug: 
+            print(f"[{self.name}] Current mode: {self.mode}", file=self.output_file_object)
+            print(f"[{self.name}] Player pos: {player_pos}", file=self.output_file_object)
+            print(f"[{self.name}] Targets: {targets}", file=self.output_file_object)
 
         # ダイクストラ法で次の移動方向を決定
-        best_move = self.dijkstra(player_pos, targets, info)
+        best_move = self.dijkstra(
+            start_pos = player_pos, 
+            targets = targets, 
+            floor_info = floor_info, 
+            player_info = player_info
+        )
 
         # 経路が見つからない，または無効な手の場合はランダム（ポーション使用以外）
         final_move = best_move
@@ -171,10 +125,10 @@ class ModeBasedAI:
         self.current_direction = final_move
         return final_move
     
-    def decide_mode(self, info: dict) -> str:
-        player_info = info['player']
-        floor_info = info['floor']
-        
+
+    def decide_mode(self, floor_info: dict, player_info: dict) -> str:
+        """ ゲーム状況に応じてAIモードを決定する """
+
         # HPが低ければポーション使用 最優先
         if player_info['hp'] <= 30 and player_info['potions']:
             return "USE_POTION"
@@ -203,6 +157,55 @@ class ModeBasedAI:
             return "MONSTER_HUNT"
         
         return "GOAL_SEARCH"
+    
+    
+    def _init_info_on_floor_change(self, floor_info: dict):
+        """ フロア移動時の情報初期化 """
+        # フロアID更新
+        self.previous_floor_id = self.current_floor_id
+
+        # 位置・方向情報初期化
+        self.previous_position = (-1, -1)
+        self.current_position = (-1, -1)
+        self.previous_direction = ""
+        self.current_direction = ""
+
+        # ギミック情報初期化
+        self.teleport_map = {}        
+        self._teleport(floor_info)
+        self.ice_regions = set()
+        for gimmick in floor_info['gimmicks']:
+            if gimmick['type'] == 'ice':
+                self.ice_regions.update({tuple(pos) for pos in gimmick['positions']})
+            elif gimmick['type'] == 'terrain_damage':
+                pass
+
+    def _update_teleport_map_from_last_turn(self, floor_info: dict, player_info: dict) -> None:
+        """
+        直前ターンの行動から teleport を推定して teleport_map を更新する。
+        - 前ターン開始位置: self.previous_position
+        - 前ターン行動: self.current_direction
+        - 実際の現在位置: self.current_position
+        """
+        if self.previous_position == (-1, -1):
+            return
+
+        last_action = self.current_direction
+        if last_action not in DIRECTIONS:
+            return
+
+        end_before_teleport, step_cost, _ = self.simulate_move(
+            start_pos = self.previous_position, 
+            move_dir = last_action, 
+            floor_info = floor_info, 
+            player_info = player_info, 
+            consider_teleport = False
+        )
+        if step_cost == self.INF:
+            return
+
+        if end_before_teleport in self.teleport_map and end_before_teleport != self.current_position:
+            self.teleport_confirm(end_before_teleport, self.current_position)
 
     # ===== teleportギミック関連 =====
     def _teleport(self, floor_info: dict):
@@ -235,7 +238,7 @@ class ModeBasedAI:
     
     # 戦闘ダメージ予測
     def _estimate_monster_damage(self, strength: str = 'normal', player_atk: int = 10) -> int:
-        """ モンスターの強さから被ダメージを概算する """
+        """ プレイヤーの攻撃力とモンスターの強さから，プレイヤーの被ダメージを概算する """
         # 強さごとのステータス係数
         if strength == 'weak':
             monster_hp, m_atk = 30, 3  # ~0.3
@@ -255,35 +258,28 @@ class ModeBasedAI:
         return turns_taken * m_atk
 
     # ステップコスト計算
-    def calculate_step_cost(self, pos: tuple[int, int], info: dict) -> int:
+    def calculate_step_cost(self, position: tuple[int, int], floor_info: dict, player_info: dict) -> int:
         """
         指定した座標 pos に踏み込む際にかかるコストを計算する。
         基本移動コスト + 罠 + 地形ダメージ + モンスター戦闘ダメージ
         """
-        
         total_cost = self.BASE_MOVE_COST
-        
-        player_info = info['player']
-        floor_info = info['floor']
         
         # 1. 罠コスト
         for item in floor_info['visible_items']:
-            if tuple(item['pos']) == pos and item['type'] == 'trap':
+            if tuple(item['pos']) == position and item['type'] == 'trap':
                 total_cost += self.BASE_TRAP_COST
         
         # 2. 地形ダメージコスト
         for gimmick in floor_info['gimmicks']:
             if gimmick['type'] == 'terrain_damage':
-                if pos in gimmick['positions']:
+                if position in gimmick['positions']:
                     total_cost += self.BASE_TERRAIN_DAMAGE_COST  # 地形ダメージを加算 TODO: デフォルトで1にしているが，経験によって推定コストを変更したい．
         
         # 3. モンスター戦闘コスト
         for monster in floor_info['monsters']:
-            if tuple(monster['pos']) == pos:
-                damage = self._estimate_monster_damage(
-                    monster['strength'], 
-                    player_info['attack']
-                )
+            if tuple(monster['pos']) == position:
+                damage = self._estimate_monster_damage(monster['strength'], player_info['attack'])
                 
                 # 「倒さないと通れない」かつ「負ける（HP以上のダメージ）」場合，通行不可
                 if damage >= player_info['hp']:
@@ -294,12 +290,12 @@ class ModeBasedAI:
         return total_cost
 
     # 経路探索
-    def dijkstra(self, start_pos: tuple[int, int], targets: set[tuple[int, int]], info: dict) -> str:
+    def dijkstra(self, start_pos: tuple[int, int], targets: set[tuple[int, int]], floor_info: dict, player_info: dict) -> str:
         """
         ダイクストラ法を用いてターゲットまでの最短（最小コスト）経路を探索する．
         最初の一歩の方向('w', 'a', 's', 'd')を返す
         """
-        grid = info['floor']['grid']
+        grid = floor_info['grid']
         
         # 優先度付きキュー: (累積コスト, 現在座標, 最初の一歩の方向)
         pq = [(0, start_pos, "")]
@@ -320,7 +316,8 @@ class ModeBasedAI:
             
             # 隣接ノード探索
             for move_dir in DIRECTIONS:
-                next_pos, step_cost, traversed_positions = self.simulate_move(current_pos, move_dir, info)
+                # 移動シミュレーション
+                next_pos, step_cost, traversed_positions = self.simulate_move(start_pos=current_pos, move_dir=move_dir, floor_info=floor_info, player_info=player_info)
                 
                 # 通行不可（勝ち目のないモンスターなど）の場合はスキップ
                 if step_cost == self.INF:
@@ -329,7 +326,7 @@ class ModeBasedAI:
                 new_cost = current_cost + step_cost
                 next_first_move = first_move if first_move else move_dir
 
-                # 氷床上を滑っている途中でもアイテムを取得できるため途中経路も確認
+                # 氷床上を滑っている途中でもアイテムを取得できるため途中経路も確認  TODO: 効率化の余地あり
                 if any(pos in targets for pos in traversed_positions):
                     return next_first_move
                 
@@ -340,13 +337,13 @@ class ModeBasedAI:
 
         return ""  # 経路が見つからない場合
     
-    def simulate_move(self, start_pos: tuple[int, int], move_dir_char: str, info: dict, consider_teleport: bool = True) -> tuple[tuple[int, int], int, list[tuple[int, int]]]:
+    def simulate_move(self, start_pos: tuple[int, int], move_dir: str, floor_info: dict, player_info: dict, consider_teleport: bool = True) -> tuple[tuple[int, int], int, list[tuple[int, int]]]:
         """
         ある位置からある方向へ移動した際の結果をシミュレーションする。 iceによる滑りと，teleportによる移動を考慮．
         return: 到達座標, 移動コスト, 通過した座標リスト
         """
-        dr, dc = DIRECTIONS[move_dir_char]
-        grid = info['floor']['grid']
+        dr, dc = DIRECTIONS[move_dir]
+        grid = floor_info['grid']
         rows, cols = len(grid), len(grid[0])
 
         next_r, next_c = start_pos[0] + dr, start_pos[1] + dc
@@ -356,24 +353,17 @@ class ModeBasedAI:
             return start_pos, self.INF, []
 
         # 閉じたドア判定
-        closed_doors = {tuple(d['pos']) for d in info['floor']['doors'] if not d['opened']}
+        closed_doors = {tuple(d['pos']) for d in floor_info['doors'] if not d['opened']}
         if (next_r, next_c) in closed_doors:
             return start_pos, self.INF, []
 
         current_pos = (next_r, next_c)
-        total_cost = self.calculate_step_cost(current_pos, info)  # 1歩目のコスト
+        total_cost = self.calculate_step_cost(position=current_pos, floor_info=floor_info, player_info=player_info)  # 1歩目のコスト
 
         path_positions = [current_pos] # 通過した座標（Iceスライド用）
 
         # Ice ギミック 
-        ice_regions = set()
-        for gimmick in info['floor']['gimmicks']:
-            if gimmick['type'] == 'ice':
-                ice_regions.update({tuple(pos) for pos in gimmick['positions']})
-            elif gimmick['type'] == 'terrain_damage':
-                continue  # 地形ダメージはすでにコスト計算に反映済み
-        
-        if current_pos in ice_regions:
+        if current_pos in self.ice_regions:
             while True:
                 slide_r = current_pos[0] + dr
                 slide_c = current_pos[1] + dc
@@ -387,14 +377,14 @@ class ModeBasedAI:
                     break # ドアで停止
 
                 next_pos = (slide_r, slide_c)
-                if next_pos not in ice_regions:
+                if next_pos not in self.ice_regions:
                     break  # 氷の外には滑り出さない
 
                 # 次のマスが有効なので移動
                 current_pos = next_pos
 
                 # 滑り中のコスト加算
-                step_cost = self.calculate_step_cost(current_pos, info)
+                step_cost = self.calculate_step_cost(position=current_pos, floor_info=floor_info, player_info=player_info)
                 total_cost += step_cost
                 path_positions.append(current_pos)
         

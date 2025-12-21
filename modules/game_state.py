@@ -18,7 +18,7 @@ class GameState:
             self.all_floors = random.sample(list(range(1, TOTAL_FLOORS + 1)), TARGET_CLEAR-1)  # クリア必要フロアリスト
             # self.all_floors = list(range(1, TOTAL_FLOORS + 1))  # デバッグ用：全フロアクリア
             self.all_floors.append(0)  #  強制的にmap00を追加
-            print(f"Selected Floors to Clear: {self.all_floors}")  # デバッグ用表示
+            # print(f"Selected Floors to Clear: {self.all_floors}")  # デバッグ用表示
 
         self.cleared_count = 0  # クリア済みフロア数
         self.current_floor_index = 0  # 現在のフロアインデックス
@@ -155,7 +155,7 @@ class GameState:
         # ゴール判定
         is_goal, goal_message = self.floor.check_goal(self.player)
         if is_goal:
-            print("ゴールに到達しました！フロアクリア！")
+            print("ゴールに到達しました！フロアクリア！", file=self.output_file)
             # print(goal_message)
             self.next_floor(self.player)  # フロアクリア処理
             if not self.is_game_cleared:
