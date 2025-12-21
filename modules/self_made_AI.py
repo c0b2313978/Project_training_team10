@@ -22,13 +22,13 @@ class ModeBasedAI:
     BASE_TERRAIN_DAMAGE_COST = 1
     MAX_HP = 100
 
-    INF = 10 ** 18
+    INF = 10 ** 18  # 通行不可コスト
 
     def __init__(self, name="ModeBasedAI", output_file_object = None):
         self.name = name
         self.output_file_object = output_file_object
 
-        self.mode = "WEAPON_SEARCH"
+        self.mode = "WEAPON_SEARCH"  # 現在のAIモード
         self.previous_floor_id = -1  # 1ターン前のフロアID
         self.current_floor_id = -1  # 現在のフロアID
 
@@ -37,8 +37,8 @@ class ModeBasedAI:
         self.previous_direction = ""    # 1ターン前の移動方向
         self.current_direction = ""     # 現在の移動方向
 
-        # self.info_by_experience = {}  # 移動履歴に基づく情報辞書
-        self.teleport_map: dict[tuple[int, int], dict] = {}  # {source_pos: {"target": target_pos, "confirmed": bool}}
+        # テレポート情報: {source_pos: {"target": target_pos, "confirmed": bool}}
+        self.teleport_map: dict[tuple[int, int], dict] = {}
         self.ice_regions = set()  # 氷セル集合
 
 
@@ -67,13 +67,13 @@ class ModeBasedAI:
         self.previous_position = self.current_position
         self.current_position = player_pos
 
-        # 経験による teleport ギミックの情報更新（前ターンの行動から推定）
+        # テレポートギミックの情報を経験から更新
         self._update_teleport_map_from_last_turn(floor_info=floor_info, player_info=player_info)
         
         # モード決定
         self.mode = self.decide_mode(floor_info=floor_info, player_info=player_info)
 
-        # ポーション使用
+        # ポーション使用モードなら即使用
         if self.mode == "USE_POTION":
             return 'u'
         
@@ -81,25 +81,31 @@ class ModeBasedAI:
         targets = set()
         
         if self.mode == "WEAPON_SEARCH":
+            # 武器の位置をターゲットに
             targets = {tuple(item['pos']) for item in floor_info['visible_items'] if item['type'] == 'weapon'}
 
         elif self.mode == "POTION_SEARCH":
+            # ポーションの位置をターゲットに
             targets = {tuple(item['pos']) for item in floor_info['visible_items'] if item['type'] == 'potion'}
 
         elif self.mode == "KEY_SEARCH":
+            # 鍵の位置をターゲットに
             targets = {tuple(item['pos']) for item in floor_info['visible_items'] if item['type'] == 'key'}
 
         elif self.mode == "HIDDEN_ITEM_SEARCH":
+            # 隠しアイテムの位置をターゲットに
             targets = {tuple(pos) for pos in floor_info['hidden_items']}
 
         elif self.mode == "MONSTER_HUNT":
-            # とりあえず全てのモンスターを候補にする（近い順に探索される）
+            # 全てのモンスターの位置をターゲットに
             targets = {tuple(m['pos']) for m in floor_info['monsters']}
 
         elif self.mode == "GOAL_SEARCH":
+            # ゴール位置をターゲットに
             targets = {tuple(pos) for pos in floor_info['goal']}
 
         if not targets:
+            # ターゲットが見つからない場合は例外
             raise Exception("ターゲットが見つからない")
         
         # ダイクストラ法で次の移動方向を決定
@@ -110,6 +116,7 @@ class ModeBasedAI:
             player_info = player_info
         )
         
+        # 経路が見つからず，未調査テレポートがあれば探索モードに切り替え
         if best_move == "" and self.mode != "TELEPORT_EXPLORE":
             teleport_targets = {pos for pos, info in self.teleport_map.items() if not info['confirmed']}
             if teleport_targets:
@@ -127,7 +134,7 @@ class ModeBasedAI:
             print(f"[{self.name}] Targets: {targets}", file=self.output_file_object)
             print(f"[{self.name}] Best path: {best_path}", file=self.output_file_object)
 
-        # 経路上のモンスターが現HPだと倒せない場合は、先にポーション使用を優先
+        # 経路上のモンスターが現HPだと倒せない場合は，先にポーション使用を優先
         if player_info['potions'] and player_info['hp'] < self.MAX_HP and best_path:
             for monster in floor_info['monsters']:
                 if tuple(monster['pos']) in best_path:
@@ -192,18 +199,18 @@ class ModeBasedAI:
         self.current_direction = ""
 
         # ギミック情報初期化
-        self.teleport_map = {}        
+        self.teleport_map = {}
         self._teleport(floor_info)
         self.ice_regions = set()
         for gimmick in floor_info['gimmicks']:
             if gimmick['type'] == 'ice':
                 self.ice_regions.update({tuple(pos) for pos in gimmick['positions']})
             elif gimmick['type'] == 'terrain_damage':
-                pass
+                pass  # 地形ダメージは現状未使用
 
     def _update_teleport_map_from_last_turn(self, floor_info: dict, player_info: dict) -> None:
         """
-        直前ターンの行動から teleport を推定して teleport_map を更新する。
+        直前ターンの行動から teleport を推定して teleport_map を更新する．
         - 前ターン開始位置: self.previous_position
         - 前ターン行動: self.current_direction
         - 実際の現在位置: self.current_position
@@ -215,6 +222,7 @@ class ModeBasedAI:
         if last_action not in DIRECTIONS:
             return
 
+        # テレポートを考慮しないで移動した場合の到達点を計算
         end_before_teleport, step_cost, _ = self.simulate_move(
             start_pos = self.previous_position, 
             move_dir = last_action, 
@@ -225,6 +233,7 @@ class ModeBasedAI:
         if step_cost == self.INF:
             return
 
+        # テレポートが発生した場合はマップに記録
         if end_before_teleport in self.teleport_map and end_before_teleport != self.current_position:
             self.teleport_confirm(end_before_teleport, self.current_position)
 
@@ -247,12 +256,12 @@ class ModeBasedAI:
                     self.teleport_map[pos] = {"target": (-1, -1), "confirmed": False}
     
     def teleport_confirm(self, source_pos: tuple[int, int], target_pos: tuple[int, int]):
-        """ テレポートギミックの情報を記録する """
+        """ テレポートギミックの情報を記録する（確定） """
         self.teleport_map[source_pos] = {"target": target_pos, "confirmed": True}
     
 
     def teleport_suspect(self, source_pos: tuple[int, int], target_pos: tuple[int, int]):
-        """ テレポートギミックの仮情報を記録する """
+        """ テレポートギミックの仮情報を記録する（未確定） """
         if source_pos in self.teleport_map and not self.teleport_map[source_pos]['confirmed']:
             self.teleport_map[source_pos] = {"target": target_pos, "confirmed": False}
     
@@ -281,7 +290,7 @@ class ModeBasedAI:
     # ステップコスト計算
     def calculate_step_cost(self, position: tuple[int, int], floor_info: dict, player_info: dict) -> int:
         """
-        指定した座標 pos に踏み込む際にかかるコストを計算する。
+        指定した座標 pos に踏み込む際にかかるコストを計算する．
         基本移動コスト + 罠 + 地形ダメージ + モンスター戦闘ダメージ
         """
         total_cost = self.BASE_MOVE_COST
@@ -305,9 +314,9 @@ class ModeBasedAI:
                 # 「倒さないと通れない」かつ「負ける（HP以上のダメージ）」場合，通行不可
                 if damage >= player_info['hp']:
                     if player_info['potions'] and damage < self.MAX_HP:
-                        pass
+                        pass  # ポーションで回復可能なら通行可
                     else:
-                        return self.INF
+                        return self.INF  # 通行不可
                 
                 total_cost += damage
                 
@@ -368,7 +377,7 @@ class ModeBasedAI:
     
     def simulate_move(self, start_pos: tuple[int, int], move_dir: str, floor_info: dict, player_info: dict, consider_teleport: bool = True) -> tuple[tuple[int, int], int, list[tuple[int, int]]]:
         """
-        ある位置からある方向へ移動した際の結果をシミュレーションする。 iceによる滑りと，teleportによる移動を考慮．
+        ある位置からある方向へ移動した際の結果をシミュレーションする． iceによる滑りと，teleportによる移動を考慮．
         return: 到達座標, 移動コスト, 通過した座標リスト
         """
         dr, dc = DIRECTIONS[move_dir]
@@ -418,7 +427,7 @@ class ModeBasedAI:
                 path_positions.append(current_pos)
         
         # Teleport ギミック
-        if consider_teleport and current_pos in self.teleport_map and self.teleport_map[current_pos]['target'] != (-1, -1):           
+        if consider_teleport and current_pos in self.teleport_map and self.teleport_map[current_pos]['target'] != (-1, -1):
             current_pos = self.teleport_map[current_pos]['target']  # テレポート先に移動
 
         return current_pos, total_cost, path_positions
