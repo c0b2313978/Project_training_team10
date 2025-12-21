@@ -100,6 +100,8 @@ class GameState:
 
         if not command in ['w', 'a', 's', 'd', 'u', 'q', 'r']:
             command = self.read_command()  # コマンド入力
+        else:
+            print(f"Command: {command}", file=self.output_file)
 
         if command == 'q':
             print("ゲーム終了します。", file=self.output_file)

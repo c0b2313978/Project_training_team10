@@ -76,12 +76,13 @@ def main(auto_play=False, agent_class=ModeBasedAI, file_output = False):
     
     try:
         while game_state.game_state():
-            command = ""
             if auto_play:
                 info, legal_actions = game_state.get_known_info()
                 command = agent.decide_move(info, legal_actions, output_debug=True)
+                game_state.step_turn(command)
                 input()  # 一時停止（手動操作時用）
-            game_state.step_turn(command)
+            else:
+                game_state.step_turn()
     finally:
         if output_file_object:
             output_file_object.close()
@@ -121,18 +122,21 @@ full_maps = [f"map_data/map{file_name:02d}.txt" for file_name in range(1, 9)]
 easy_maps = [f"map_data/map{file_name:02d}.txt" for file_name in (1, 2, 3, 5, 6)]
 def tmp(auto_play=False):
     # game_state = GameState(requires_map_file_path=easy_maps)  # デバッグ用：特定フロア指定
-    game_state = GameState(requires_map_file_path=["map_data/map08.txt"])  # デバッグ用：特定フロア指定
+    game_state = GameState(requires_map_file_path=["map_data/map07.txt"])  # デバッグ用：特定フロア指定
     agent = ModeBasedAI()
     
     while game_state.game_state():
-        command = ""
         if auto_play:
             info, legal_actions = game_state.get_known_info()
             command = agent.decide_move(info, legal_actions, output_debug=True)
+            game_state.step_turn(command)
             input()  # 一時停止（手動操作時用）
-        game_state.step_turn(command)
+        else:
+            game_state.step_turn()
 
 
 if __name__ == "__main__":
-    main(auto_play=True)
+    # main(auto_play=True)
+    tmp(auto_play=True)
+    # tmp(auto_play=False)
     # performance_evaluation(times=100, agent_class=ModeBasedAI, file_output=True)
