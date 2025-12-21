@@ -101,18 +101,19 @@ class ModeBasedAI:
         if not targets:
             raise Exception("ターゲットが見つからない")
         
-        if output_debug: 
-            print(f"[{self.name}] Current mode: {self.mode}", file=self.output_file_object)
-            print(f"[{self.name}] Player pos: {player_pos}", file=self.output_file_object)
-            print(f"[{self.name}] Targets: {targets}", file=self.output_file_object)
-
         # ダイクストラ法で次の移動方向を決定
-        best_move = self.dijkstra(
+        best_move, best_path = self.dijkstra(
             start_pos = player_pos, 
             targets = targets, 
             floor_info = floor_info, 
             player_info = player_info
         )
+        
+        if output_debug:
+            print(f"[{self.name}] Current mode: {self.mode}", file=self.output_file_object)
+            print(f"[{self.name}] Player pos: {player_pos}", file=self.output_file_object)
+            print(f"[{self.name}] Targets: {targets}", file=self.output_file_object)
+            print(f"[{self.name}] Best path: {best_path}", file=self.output_file_object)
 
         # 経路が見つからない，または無効な手の場合はランダム（ポーション使用以外）
         final_move = best_move
@@ -290,21 +291,22 @@ class ModeBasedAI:
         return total_cost
 
     # 経路探索
-    def dijkstra(self, start_pos: tuple[int, int], targets: set[tuple[int, int]], floor_info: dict, player_info: dict) -> str:
+    def dijkstra(self, start_pos: tuple[int, int], targets: set[tuple[int, int]], floor_info: dict, player_info: dict) -> tuple[str, list[tuple[int, int]]]:
         """
         ダイクストラ法を用いてターゲットまでの最短（最小コスト）経路を探索する．
         最初の一歩の方向('w', 'a', 's', 'd')を返す
+        return: (first_move, path_positions)
         """
         grid = floor_info['grid']
         
-        # 優先度付きキュー: (累積コスト, 現在座標, 最初の一歩の方向)
-        pq = [(0, start_pos, "")]
+        # 優先度付きキュー: (累積コスト, 現在座標, 最初の一歩の方向, 経路)
+        pq = [(0, start_pos, "", [start_pos])]
         
         # 訪問済みコスト管理: 座標 -> 最小コスト
         min_costs = {start_pos: 0}
 
         while pq:
-            current_cost, current_pos, first_move = heapq.heappop(pq)
+            current_cost, current_pos, first_move, path = heapq.heappop(pq)
             
             # 記録されているコストより大きい場合はスキップ
             if current_cost > min_costs.get(current_pos, self.INF):
@@ -312,7 +314,7 @@ class ModeBasedAI:
             
             # ターゲット到達判定
             if current_pos in targets:
-                return first_move
+                return first_move, path
             
             # 隣接ノード探索
             for move_dir in DIRECTIONS:
@@ -325,17 +327,21 @@ class ModeBasedAI:
                 
                 new_cost = current_cost + step_cost
                 next_first_move = first_move if first_move else move_dir
+                new_path = path + traversed_positions
+                if not new_path or next_pos != new_path[-1]:
+                    new_path = new_path + [next_pos]
 
                 # 氷床上を滑っている途中でもアイテムを取得できるため途中経路も確認  TODO: 効率化の余地あり
-                if any(pos in targets for pos in traversed_positions):
-                    return next_first_move
+                for i, pos in enumerate(traversed_positions):
+                    if pos in targets:
+                        return next_first_move, path + traversed_positions[:i + 1]
                 
                 # コスト更新判定
                 if new_cost < min_costs.get(next_pos, self.INF):
                     min_costs[next_pos] = new_cost
-                    heapq.heappush(pq, (new_cost, next_pos, next_first_move))
+                    heapq.heappush(pq, (new_cost, next_pos, next_first_move, new_path))
 
-        return ""  # 経路が見つからない場合
+        return "", []  # 経路が見つからない場合
     
     def simulate_move(self, start_pos: tuple[int, int], move_dir: str, floor_info: dict, player_info: dict, consider_teleport: bool = True) -> tuple[tuple[int, int], int, list[tuple[int, int]]]:
         """
