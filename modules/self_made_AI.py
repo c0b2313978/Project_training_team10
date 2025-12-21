@@ -110,6 +110,17 @@ class ModeBasedAI:
             player_info = player_info
         )
         
+        if best_move == "" and self.mode != "TELEPORT_EXPLORE":
+            teleport_targets = {pos for pos, info in self.teleport_map.items() if not info['confirmed']}
+            if teleport_targets:
+                self.mode = "TELEPORT_EXPLORE"
+                best_move, best_path = self.dijkstra(
+                    start_pos = player_pos,
+                    targets = teleport_targets,
+                    floor_info = floor_info,
+                    player_info = player_info
+                )
+        
         if output_debug:
             print(f"[{self.name}] Current mode: {self.mode}", file=self.output_file_object)
             print(f"[{self.name}] Player pos: {player_pos}", file=self.output_file_object)
