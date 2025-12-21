@@ -20,6 +20,7 @@ class ModeBasedAI:
     BASE_MOVE_COST = 1
     BASE_TRAP_COST = 1
     BASE_TERRAIN_DAMAGE_COST = 1
+    MAX_HP = 100
 
     INF = 10 ** 18
 
@@ -114,6 +115,14 @@ class ModeBasedAI:
             print(f"[{self.name}] Player pos: {player_pos}", file=self.output_file_object)
             print(f"[{self.name}] Targets: {targets}", file=self.output_file_object)
             print(f"[{self.name}] Best path: {best_path}", file=self.output_file_object)
+
+        # 経路上のモンスターが現HPだと倒せない場合は、先にポーション使用を優先
+        if player_info['potions'] and player_info['hp'] < self.MAX_HP and best_path:
+            for monster in floor_info['monsters']:
+                if tuple(monster['pos']) in best_path:
+                    damage = self._estimate_monster_damage(monster['strength'], player_info['attack'])
+                    if damage >= player_info['hp']:
+                        return 'u'
 
         # 経路が見つからない，または無効な手の場合はランダム（ポーション使用以外）
         final_move = best_move
@@ -284,7 +293,10 @@ class ModeBasedAI:
                 
                 # 「倒さないと通れない」かつ「負ける（HP以上のダメージ）」場合，通行不可
                 if damage >= player_info['hp']:
-                    return self.INF
+                    if player_info['potions'] and damage < self.MAX_HP:
+                        pass
+                    else:
+                        return self.INF
                 
                 total_cost += damage
                 
